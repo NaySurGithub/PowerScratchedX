@@ -12,6 +12,7 @@ Build [PowerNukkitX](https://github.com/PowerNukkitX/PowerNukkitX) plugins with 
 - Server: broadcast, console commands, logging, loop over online players, set/get blocks, world time, sounds.
 - Custom items: plain items, swords, pickaxes, axes, shovels, hoes, armor pieces and food with tier, texture, damage, durability, glint, cooldown, armor points, nutrition - plus events for using, hitting with, eating or switching to an item, cooldown blocks and "target" blocks for the entity hit.
 - Custom blocks with hardness, resistance, light, friction and a click event.
+- A resource pack (`.mcpack`) is generated alongside the JAR when the plugin has custom items or blocks, mapping them to the chosen textures; drop it in the server's `resource_packs/` folder.
 - Custom commands with description and permission, sender/argument reporters, permission declarations (`plugin.yml`).
 - Config: default values (`config.yml`), get/set/has/reload.
 - Time: repeating tasks (`every N ticks`) and delayed tasks (`wait N ticks then`).

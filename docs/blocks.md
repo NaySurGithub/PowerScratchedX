@@ -42,12 +42,12 @@ Events: `when a player uses item` (right click; empty id = any item), `when a pl
 
 Other blocks: `custom item id` (full id reporter), `start cooldown of item … for player`, `item … is on cooldown`, `player is holding …`, `player is wearing …`, `remove effect`, and the `target` blocks for the entity hit (`target as player`, `target is a player`, `target name/health`, `set target on fire`, `give effect to target`, `set target health`).
 
-Textures: the `texture` field is a texture *name*. Vanilla names (`diamond_sword`, `apple`, `iron_helmet`, `blaze_rod`…) display without any client download. For your own textures, ship a resource pack that defines that name in `item_texture.json`.
+Textures: the `texture` field is a vanilla texture name (`diamond_sword`, `apple`, `iron_helmet`, `blaze_rod`…) or a full path (`textures/items/my_sword`). When a plugin has custom items or blocks, the build also produces a **resource pack** (`<Plugin>-<version>.mcpack`) that maps each custom item/block to that texture. Drop it in the server's `resource_packs/` folder: the server sends it to players on join, and the icons appear. Without the pack the client shows an empty icon.
 
 Cooldowns: a cooldown property is enforced automatically by `when a player uses item` (the script is skipped while the item is cooling down) and shown on the client's hotbar.
 
 ### Custom Blocks
-`custom block <id> named <name> texture <name>` with properties `hardness`, `explosion resistance`, `light emission`, `friction`, `lets light through`. `when a player clicks block <id>` runs on left/right click (empty = any block). `custom block id` gives the full id for `set block` / `give`. Block textures use vanilla terrain texture names (`stone`, `diamond_block`, `oak_planks`…) unless you ship a resource pack.
+`custom block <id> named <name> texture <name>` with properties `hardness`, `explosion resistance`, `light emission`, `friction`, `lets light through`. `when a player clicks block <id>` runs on left/right click (empty = any block). `custom block id` gives the full id for `set block` / `give`. Block textures use vanilla terrain texture names (`stone`, `diamond_block`, `oak_planks`…) or a full path; they are mapped in the generated resource pack too.
 
 ### Config
 `config: key defaults to value` (writes `config.yml`, saved on first run), `config key`, `set config key to`, `config has key`, `reload config`.

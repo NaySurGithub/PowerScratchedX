@@ -11,7 +11,8 @@
     "coverage": "node scripts/coverage.mjs"
   },
   "dependencies": {
-    "blockly": "^12.0.0"
+    "blockly": "^12.0.0",
+    "jszip": "^3.10.1"
   },
   "devDependencies": {
     "vite": "^7.0.0"

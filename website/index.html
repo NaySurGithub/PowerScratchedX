@@ -11,26 +11,28 @@
   </head>
   <body>
     <header class="topbar">
-      <div class="brand">
-        <span class="logo">⚡</span>
-        <span class="brand-name">PowerScratchedX</span>
-      </div>
-      <button id="btn-project" class="icon-btn" title="Project settings" aria-label="Project settings" aria-expanded="false">
-        <span class="icon">⚙</span><span class="label">Project</span>
-      </button>
-      <div id="meta" class="meta">
-        <label class="field"><span>Name</span><input id="meta-name" placeholder="Plugin name" maxlength="40" autocomplete="off" /></label>
-        <label class="field short"><span>Version</span><input id="meta-version" placeholder="1.0.0" maxlength="20" autocomplete="off" /></label>
-        <label class="field"><span>Author</span><input id="meta-author" placeholder="Author" maxlength="40" autocomplete="off" /></label>
-        <label class="field long"><span>Description</span><input id="meta-description" placeholder="Description" maxlength="200" autocomplete="off" /></label>
-      </div>
-      <div class="actions">
-        <button id="btn-new" title="New project"><span class="icon">✦</span><span class="label">New</span></button>
-        <button id="btn-open" title="Open a .psx.json project"><span class="icon">📂</span><span class="label">Open</span></button>
-        <button id="btn-save" title="Download the project as .psx.json"><span class="icon">💾</span><span class="label">Save</span></button>
-        <button id="btn-code" title="Show generated Java"><span class="icon">{ }</span><span class="label">Java</span></button>
-        <button id="btn-build" class="primary" title="Compile and download the plugin JAR"><span class="icon">⬇</span><span class="label">Build JAR</span></button>
-      </div>
+      <div class="brand">PowerScratchedX</div>
+      <nav class="menu">
+        <div class="menu-group">
+          <button id="menu-file" class="menu-btn" aria-haspopup="true" aria-expanded="false">File</button>
+          <div id="file-menu" class="dropdown" hidden>
+            <button id="btn-new">New project</button>
+            <button id="btn-open">Load from your computer</button>
+            <button id="btn-save">Save to your computer</button>
+          </div>
+        </div>
+        <button id="btn-code" class="menu-btn">Java code</button>
+        <div class="menu-group">
+          <button id="btn-project" class="menu-btn" aria-haspopup="true" aria-expanded="false">Project settings</button>
+          <div id="meta" class="dropdown panel" hidden>
+            <label class="field"><span>Version</span><input id="meta-version" placeholder="1.0.0" maxlength="20" autocomplete="off" /></label>
+            <label class="field"><span>Author</span><input id="meta-author" placeholder="Author" maxlength="40" autocomplete="off" /></label>
+            <label class="field"><span>Description</span><input id="meta-description" placeholder="Description" maxlength="200" autocomplete="off" /></label>
+          </div>
+        </div>
+      </nav>
+      <input id="meta-name" class="title-input" placeholder="Plugin name" maxlength="40" autocomplete="off" />
+      <button id="btn-build" class="build-btn">Build JAR</button>
     </header>
     <main class="workspace">
       <div id="blockly"></div>
@@ -39,7 +41,7 @@
           <span>Main.java</span>
           <div class="code-actions">
             <button id="btn-copy">Copy</button>
-            <button id="btn-close-code" class="close" aria-label="Close">✕</button>
+            <button id="btn-close-code" class="close" aria-label="Close">Close</button>
           </div>
         </div>
         <div id="errors" class="errors" hidden></div>
@@ -48,26 +50,33 @@
     </main>
     <footer class="statusbar">
       <span id="status" class="status"></span>
-      <span id="backend" class="backend">Checking backend…</span>
+      <span id="backend" class="backend">Checking backend</span>
     </footer>
     <div id="toast" class="toast" hidden></div>
     <div id="build-modal" class="modal" hidden>
       <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="build-title">
-        <div class="modal-icon" id="build-icon">⚙</div>
-        <h2 id="build-title">Building your plugin</h2>
-        <p id="build-subtitle" class="modal-subtitle">MyPlugin 1.0.0</p>
-        <div class="progress"><div id="build-bar" class="progress-bar"></div></div>
-        <div id="build-percent" class="progress-percent">0%</div>
-        <ol id="build-steps" class="steps">
-          <li data-step="generate"><span class="dot"></span>Generating Java source</li>
-          <li data-step="upload"><span class="dot"></span>Sending to build server</li>
-          <li data-step="compile"><span class="dot"></span>Compiling against PowerNukkitX</li>
-          <li data-step="package"><span class="dot"></span>Packaging the JAR</li>
-        </ol>
-        <div id="build-errors" class="modal-errors" hidden></div>
-        <div class="modal-actions">
-          <button id="build-download" class="btn-primary" hidden>Download again</button>
-          <button id="build-close" class="btn-secondary" hidden>Close</button>
+        <div class="modal-head">
+          <h2 id="build-title">Building your plugin</h2>
+          <p id="build-subtitle" class="modal-subtitle">MyPlugin 1.0.0</p>
+        </div>
+        <div class="modal-body">
+          <div class="progress"><div id="build-bar" class="progress-bar"></div></div>
+          <div id="build-percent" class="progress-percent">0%</div>
+          <ol id="build-steps" class="steps">
+            <li data-step="generate"><span class="dot"></span>Generating Java source</li>
+            <li data-step="upload"><span class="dot"></span>Sending to build server</li>
+            <li data-step="compile"><span class="dot"></span>Compiling against PowerNukkitX</li>
+            <li data-step="package"><span class="dot"></span>Packaging the JAR</li>
+          </ol>
+          <div id="build-errors" class="modal-errors" hidden></div>
+          <div id="build-pack-hint" class="modal-hint" hidden>
+            This plugin has custom items or blocks. Put the <strong>resource pack</strong> in your server's <code>resource_packs/</code> folder so players see the textures.
+          </div>
+          <div class="modal-actions">
+            <button id="build-download" class="btn-primary" hidden>Download JAR</button>
+            <button id="build-pack" class="btn-primary" hidden>Download resource pack</button>
+            <button id="build-close" class="btn-secondary" hidden>Close</button>
+          </div>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { buildProject, sanitizeName } from './generator/java.js';
 import * as api from './api.js';
 import { serialize, deserialize, saveLocal, loadLocal, clearLocal, downloadBlob, pickFile, defaultMeta, FILE_EXT } from './project.js';
 import { starterProject } from './examples/starter.js';
+import { buildResourcePack, hasResourcePack } from './resourcepack.js';
 import './style.css';
 
 const $ = (id) => document.getElementById(id);
@@ -149,10 +150,32 @@ function setCodePanel(open) {
   Blockly.svgResize(workspace);
 }
 
-function setProjectDrawer(open) {
-  document.body.classList.toggle('project-open', open);
-  $('btn-project').setAttribute('aria-expanded', String(open));
+const MENUS = [
+  { button: 'menu-file', panel: 'file-menu' },
+  { button: 'btn-project', panel: 'meta' },
+];
+
+function setMenu(name, open) {
+  for (const m of MENUS) {
+    const isTarget = m.button === name;
+    $(m.panel).hidden = !(isTarget && open);
+    $(m.button).setAttribute('aria-expanded', String(isTarget && open));
+  }
 }
+
+function closeMenus() {
+  setMenu('', false);
+}
+
+for (const m of MENUS) {
+  $(m.button).addEventListener('click', () => {
+    setMenu(m.button, $(m.panel).hidden);
+  });
+}
+
+$('file-menu').addEventListener('click', (e) => {
+  if (e.target.closest('button')) closeMenus();
+});
 
 function loadProject(data) {
   const m = deserialize(new Blockly.Workspace(), data);
@@ -170,14 +193,9 @@ for (const id of ['meta-name', 'meta-version', 'meta-author', 'meta-description'
   });
 }
 
-$('btn-project').addEventListener('click', () => {
-  setProjectDrawer(!document.body.classList.contains('project-open'));
-});
-
 document.addEventListener('click', (e) => {
-  if (!document.body.classList.contains('project-open')) return;
-  if (e.target.closest('#meta') || e.target.closest('#btn-project')) return;
-  setProjectDrawer(false);
+  if (e.target.closest('.menu-group')) return;
+  closeMenus();
 });
 
 $('btn-code').addEventListener('click', () => setCodePanel(!codePanelOpen));
@@ -232,12 +250,13 @@ const buildModal = {
     this.lastArtifact = null;
     this.el.className = 'modal building';
     this.el.hidden = false;
-    $('build-icon').textContent = '⚙';
     $('build-title').textContent = 'Building your plugin';
     $('build-subtitle').textContent = `${project.name} ${project.version}`;
     $('build-errors').hidden = true;
     $('build-errors').innerHTML = '';
     $('build-download').hidden = true;
+    $('build-pack').hidden = true;
+    $('build-pack-hint').hidden = true;
     $('build-close').hidden = true;
     for (const li of $('build-steps').children) li.className = '';
     this.progress = 0;
@@ -270,18 +289,19 @@ const buildModal = {
     $('build-percent').textContent = `${Math.round(this.progress)}%`;
   },
 
-  success(filename, blob) {
+  success(filename, blob, pack) {
     clearInterval(this.timer);
     this.progress = 100;
     this.target = 100;
     this.render();
     for (const li of $('build-steps').children) li.className = 'done';
     this.el.className = 'modal success';
-    $('build-icon').textContent = '✓';
-    $('build-title').textContent = 'Plugin ready!';
+    $('build-title').textContent = 'Plugin ready';
     $('build-subtitle').textContent = filename;
-    this.lastArtifact = { filename, blob };
+    this.lastArtifact = { filename, blob, pack };
     $('build-download').hidden = false;
+    $('build-pack').hidden = !pack;
+    $('build-pack-hint').hidden = !pack;
     $('build-close').hidden = false;
   },
 
@@ -292,7 +312,6 @@ const buildModal = {
     const active = $('build-steps').querySelector('.active');
     if (active) active.className = 'failed';
     this.el.className = 'modal error';
-    $('build-icon').textContent = '!';
     $('build-title').textContent = 'Build failed';
     $('build-subtitle').textContent = message;
     const box = $('build-errors');
@@ -315,6 +334,10 @@ const buildModal = {
 $('build-close').addEventListener('click', () => buildModal.close());
 $('build-download').addEventListener('click', () => {
   if (buildModal.lastArtifact) downloadBlob(buildModal.lastArtifact.blob, buildModal.lastArtifact.filename);
+});
+$('build-pack').addEventListener('click', () => {
+  const pack = buildModal.lastArtifact && buildModal.lastArtifact.pack;
+  if (pack) downloadBlob(pack.blob, pack.filename);
 });
 $('build-modal').addEventListener('click', (e) => {
   if (e.target === $('build-modal') && !$('build-modal').classList.contains('building')) buildModal.close();
@@ -353,9 +376,14 @@ $('btn-build').addEventListener('click', async () => {
     });
     if (result.ok) {
       buildModal.step('package', 97);
-      await wait(400);
+      let pack = null;
+      if (hasResourcePack(project.resourcePack)) {
+        const blob = await buildResourcePack(project.resourcePack);
+        pack = { blob, filename: `${project.name}-${project.version}.mcpack` };
+      }
+      await wait(300);
       downloadBlob(result.blob, result.filename);
-      buildModal.success(result.filename, result.blob);
+      buildModal.success(result.filename, result.blob, pack);
       setStatus(`Built ${result.filename}`, 'ok');
     } else {
       const errors = result.errors || [{ message: result.error || 'Build failed' }];

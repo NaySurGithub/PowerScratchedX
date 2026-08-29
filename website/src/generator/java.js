@@ -516,7 +516,7 @@ function itemClass(it, ctx) {
     if (p.stack) overrides.push(`public int getMaxStackSize() { return ${Math.round(p.stack)}; }`);
   }
 
-  const chain = [`.name(${jstr(it.name)})`, `.texture(${jstr(it.texture)})`];
+  const chain = [`.name(${jstr(it.name)})`, `.texture(${jstr(textureKey(ctx, it.id))})`];
   if (it.kind === 'item') {
     if (p.stack) chain.push(`.maxStackSize(${Math.round(p.stack)})`);
     if (p.durability) chain.push(`.durability(${Math.round(p.durability)})`);
@@ -548,7 +548,17 @@ ${overrides.map((o) => {
 `;
 }
 
-function blockClass(bl) {
+function textureKey(ctx, id) {
+  return `psx_${ctx.ns}_${id}`;
+}
+
+function texturePath(kind, name) {
+  const clean = String(name || '').trim().replace(/\\/g, '/').replace(/\.png$/i, '');
+  if (clean.startsWith('textures/')) return clean;
+  return `textures/${kind}/${clean || 'missing'}`;
+}
+
+function blockClass(bl, ctx) {
   const cls = 'Block_' + bl.id;
   const p = bl.props;
   const base = p.transparent ? 'org.powernukkitx.block.BlockTransparent' : 'org.powernukkitx.block.BlockSolid';
@@ -607,7 +617,7 @@ function blockClass(bl) {
         public org.powernukkitx.block.customblock.CustomBlockDefinition getDefinition() {
             return org.powernukkitx.block.customblock.CustomBlockDefinition.builder(this)
                 .name(${jstr(bl.name)})
-                .texture(${jstr(bl.texture)})
+                .texture(${jstr(textureKey(ctx, bl.id))})
                 .breakTime(${jfloat(hardness * 1.5)})
                 .destructibleByExplosion(${Math.round(resistance)})
                 .lightEmission(${light})
@@ -651,6 +661,7 @@ export function buildProject(workspace, meta) {
     javaGenerator.blockToCode(b);
   }
   const ctx = javaGenerator.ctx;
+  ctx.ns = pkg.split('.').pop();
 
   const seen = new Set();
   const commands = ctx.commands.filter((c) => (seen.has(c.name) ? false : seen.add(c.name)));
@@ -661,7 +672,21 @@ export function buildProject(workspace, meta) {
     files['config.yml'] = ctx.configDefaults.map((d) => `${d.key}: ${yamlValue(d.value)}`).join('\n') + '\n';
   }
   files['src/' + pkg.replace(/\./g, '/') + '/Main.java'] = mainJava(pkg, meta, ctx, commands);
-  return { name, version: meta.version || '1.0.0', main, files, java: files['src/' + pkg.replace(/\./g, '/') + '/Main.java'] };
+
+  const seenItems = new Set();
+  const seenBlocks = new Set();
+  const resourcePack = {
+    name,
+    version: meta.version || '1.0.0',
+    items: ctx.items
+      .filter((i) => (seenItems.has(i.id) ? false : seenItems.add(i.id)))
+      .map((i) => ({ id: i.id, key: textureKey(ctx, i.id), path: texturePath('items', i.texture) })),
+    blocks: ctx.blocks
+      .filter((b) => (seenBlocks.has(b.id) ? false : seenBlocks.add(b.id)))
+      .map((b) => ({ id: b.id, key: textureKey(ctx, b.id), path: texturePath('blocks', b.texture) })),
+  };
+
+  return { name, version: meta.version || '1.0.0', main, files, java: files['src/' + pkg.replace(/\./g, '/') + '/Main.java'], resourcePack };
 }
 
 function pluginYml(meta, commands, permissions) {
@@ -796,7 +821,7 @@ ${commandSwitch}
     }
 
 ${ctx.handlers.join('\n')}
-${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${blocks.map((b) => blockClass(b)).join('\n')}
+${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${blocks.map((b) => blockClass(b, ctx)).join('\n')}
     static final class Ctx {
         Player player;
         CommandSender sender;
