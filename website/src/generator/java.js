@@ -559,6 +559,31 @@ for (const t of ['fel_label', 'fel_header', 'fel_divider', 'fel_input', 'fel_tog
   G[t] = () => '';
 }
 
+G.list_add = (b) => `listAdd(${str(b, 'NAME')}, ${v(b, 'VALUE')});\n`;
+G.list_remove = (b) => `listRemove(${str(b, 'NAME')}, ${v(b, 'VALUE')});\n`;
+G.list_remove_at = (b) => `listRemoveAt(${str(b, 'NAME')}, (int) ${num(b, 'INDEX', '1')});\n`;
+G.list_set = (b) => `listSet(${str(b, 'NAME')}, (int) ${num(b, 'INDEX', '1')}, ${v(b, 'VALUE')});\n`;
+G.list_clear = (b) => `listClear(${str(b, 'NAME')});\n`;
+G.list_contains = (b) => [`listContains(${str(b, 'NAME')}, ${v(b, 'VALUE')})`, ORDER];
+G.list_length = (b) => [`((double) list(${str(b, 'NAME')}).size())`, ORDER];
+G.list_item = (b) => [`listItem(${str(b, 'NAME')}, (int) ${num(b, 'INDEX', '1')})`, ORDER];
+G.list_index_of = (b) => [`listIndexOf(${str(b, 'NAME')}, ${v(b, 'VALUE')})`, ORDER];
+G.list_join = (b) => [`listJoin(${str(b, 'NAME')}, ${str(b, 'SEP', '", "')})`, ORDER];
+G.list_foreach = (b) => {
+  const m = hoist(statements(b, 'DO'));
+  return `for (Object each : new ArrayList<>(list(${str(b, 'NAME')}))) { Ctx c2 = c.copy(); c2.listItem = each; ${m}(c2); }\n`;
+};
+G.list_current = () => ['(c.listItem == null ? "" : c.listItem)', ORDER];
+
+G.pdata_set = (b) => withPlayer(b, `dataSet(p.getName(), ${str(b, 'KEY')}, ${v(b, 'VALUE')});`);
+G.pdata_change = (b) => withPlayer(b, `dataSet(p.getName(), ${str(b, 'KEY')}, num(dataGet(p.getName(), ${str(b, 'KEY')})) + ${num(b, 'DELTA', '1')});`);
+G.pdata_remove = (b) => withPlayer(b, `dataRemove(p.getName(), ${str(b, 'KEY')});`);
+G.pdata_clear = (b) => withPlayer(b, 'dataClear(p.getName());');
+G.pdata_get = (b) => pv(b, (q) => `dataGet(${q}.getName(), ${str(b, 'KEY')})`, '""');
+G.pdata_has = (b) => pv(b, (q) => `dataHas(${q}.getName(), ${str(b, 'KEY')})`, 'false');
+G.pdata_set_name = (b) => `dataSet(${str(b, 'NAME')}, ${str(b, 'KEY')}, ${v(b, 'VALUE')});\n`;
+G.pdata_get_name = (b) => [`dataGet(${str(b, 'NAME')}, ${str(b, 'KEY')})`, ORDER];
+
 G.form_button_text = () => ['(c.formText)', ORDER];
 G.form_button_index = () => ['((double) (c.formButton + 1))', ORDER];
 G.form_value = (b) => [`formValue(c.formResponse, (int) ${num(b, 'INDEX', '1')})`, ORDER];
@@ -829,6 +854,7 @@ function indent(s, n = 2) {
 function mainJava(pkg, meta, ctx, commands) {
   const enableParts = [];
   enableParts.push('instance = this;');
+  enableParts.push('loadData();');
   if (ctx.configDefaults.length) enableParts.push('saveDefaultConfig();');
   if (ctx.handlers.length) enableParts.push('getServer().getPluginManager().registerEvents(this, this);');
   enableParts.push(...ctx.repeating);
@@ -909,7 +935,8 @@ ${indent(enableBody, 1)}    }
     @Override
     public void onDisable() {
         Ctx c = new Ctx();
-${indent(disableBody, 1)}    }
+${indent(disableBody, 1)}        saveData();
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -939,6 +966,7 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
         int formButton = -1;
         String formText = "";
         Object formResponse;
+        Object listItem;
 
         Ctx copy() {
             Ctx n = new Ctx();
@@ -955,8 +983,142 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
             n.formButton = formButton;
             n.formText = formText;
             n.formResponse = formResponse;
+            n.listItem = listItem;
             return n;
         }
+    }
+
+    private final Map<String, List<Object>> lists = new java.util.LinkedHashMap<>();
+    private final Map<String, Map<String, Object>> playerData = new java.util.LinkedHashMap<>();
+    private static final com.google.gson.Gson GSON = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+
+    private java.io.File dataFile(String name) {
+        getDataFolder().mkdirs();
+        return new java.io.File(getDataFolder(), name);
+    }
+
+    private void loadData() {
+        try {
+            java.io.File listsFile = dataFile("lists.json");
+            if (listsFile.isFile()) {
+                Map<String, List<Object>> loaded = GSON.fromJson(java.nio.file.Files.readString(listsFile.toPath()), new com.google.gson.reflect.TypeToken<Map<String, List<Object>>>() { }.getType());
+                if (loaded != null) lists.putAll(loaded);
+            }
+            java.io.File playersFile = dataFile("players.json");
+            if (playersFile.isFile()) {
+                Map<String, Map<String, Object>> loaded = GSON.fromJson(java.nio.file.Files.readString(playersFile.toPath()), new com.google.gson.reflect.TypeToken<Map<String, Map<String, Object>>>() { }.getType());
+                if (loaded != null) playerData.putAll(loaded);
+            }
+        } catch (Exception e) {
+            getLogger().warning("Could not load plugin data: " + e.getMessage());
+        }
+    }
+
+    private void saveData() {
+        try {
+            java.nio.file.Files.writeString(dataFile("lists.json").toPath(), GSON.toJson(lists));
+            java.nio.file.Files.writeString(dataFile("players.json").toPath(), GSON.toJson(playerData));
+        } catch (Exception e) {
+            getLogger().warning("Could not save plugin data: " + e.getMessage());
+        }
+    }
+
+    private List<Object> list(String name) {
+        return lists.computeIfAbsent(str(name).toLowerCase(), k -> new ArrayList<>());
+    }
+
+    private void listAdd(String name, Object value) {
+        list(name).add(value);
+        saveData();
+    }
+
+    private void listRemove(String name, Object value) {
+        List<Object> items = list(name);
+        for (int i = 0; i < items.size(); i++) {
+            if (eq(items.get(i), value)) {
+                items.remove(i);
+                saveData();
+                return;
+            }
+        }
+    }
+
+    private void listRemoveAt(String name, int index) {
+        List<Object> items = list(name);
+        if (index >= 1 && index <= items.size()) {
+            items.remove(index - 1);
+            saveData();
+        }
+    }
+
+    private void listSet(String name, int index, Object value) {
+        List<Object> items = list(name);
+        if (index >= 1 && index <= items.size()) {
+            items.set(index - 1, value);
+            saveData();
+        }
+    }
+
+    private void listClear(String name) {
+        list(name).clear();
+        saveData();
+    }
+
+    private boolean listContains(String name, Object value) {
+        for (Object item : list(name)) {
+            if (eq(item, value)) return true;
+        }
+        return false;
+    }
+
+    private Object listItem(String name, int index) {
+        List<Object> items = list(name);
+        return index >= 1 && index <= items.size() ? items.get(index - 1) : "";
+    }
+
+    private double listIndexOf(String name, Object value) {
+        List<Object> items = list(name);
+        for (int i = 0; i < items.size(); i++) {
+            if (eq(items.get(i), value)) return i + 1;
+        }
+        return 0;
+    }
+
+    private String listJoin(String name, String separator) {
+        StringBuilder out = new StringBuilder();
+        for (Object item : list(name)) {
+            if (out.length() > 0) out.append(separator);
+            out.append(str(item));
+        }
+        return out.toString();
+    }
+
+    private Map<String, Object> data(String playerName) {
+        return playerData.computeIfAbsent(str(playerName).toLowerCase(), k -> new java.util.LinkedHashMap<>());
+    }
+
+    private void dataSet(String playerName, String key, Object value) {
+        data(playerName).put(str(key), value);
+        saveData();
+    }
+
+    private Object dataGet(String playerName, String key) {
+        Object value = data(playerName).get(str(key));
+        return value == null ? "" : value;
+    }
+
+    private boolean dataHas(String playerName, String key) {
+        return data(playerName).containsKey(str(key));
+    }
+
+    private void dataRemove(String playerName, String key) {
+        data(playerName).remove(str(key));
+        saveData();
+    }
+
+    private void dataClear(String playerName) {
+        playerData.remove(str(playerName).toLowerCase());
+        saveData();
     }
 
     private static org.powernukkitx.form.element.simple.ButtonImage buttonImage(String image) {

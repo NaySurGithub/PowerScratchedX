@@ -426,12 +426,35 @@ PHONE.addEventListener('change', () => {
 window.addEventListener('resize', () => Blockly.svgResize(workspace));
 window.addEventListener('orientationchange', () => setTimeout(() => Blockly.svgResize(workspace), 150));
 
-const saved = loadLocal();
-try {
-  loadProject(saved || starterProject);
-} catch {
-  loadProject(starterProject);
+function rerenderWorkspace() {
+  if (!workspace) return;
+  const state = Blockly.serialization.workspaces.save(workspace);
+  injectWorkspace(state);
 }
+
+async function start() {
+  if (document.fonts && document.fonts.load) {
+    try {
+      await Promise.race([
+        Promise.all([document.fonts.load('600 12px "Inter"'), document.fonts.load('400 12px "JetBrains Mono"')]),
+        new Promise((resolve) => setTimeout(resolve, 2500)),
+      ]);
+    } catch {
+      // fonts unavailable, fall back to system font
+    }
+  }
+  const saved = loadLocal();
+  try {
+    loadProject(saved || starterProject);
+  } catch {
+    loadProject(starterProject);
+  }
+  if (document.fonts) {
+    document.fonts.addEventListener('loadingdone', rerenderWorkspace, { once: true });
+  }
+}
+
+start();
 
 checkBackend();
 setInterval(checkBackend, 15000);

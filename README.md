@@ -25,6 +25,7 @@ Build [PowerNukkitX](https://github.com/PowerNukkitX/PowerNukkitX) plugins with 
 - Config: default values (`config.yml`), get/set/has/reload.
 - Time: repeating tasks (`every N ticks`) and delayed tasks (`wait N ticks then`).
 - Control & operators: if/else, repeat, while/until, math, comparison, logic, text, Minecraft color codes, variables.
+- Lists (named, persistent) and per-player data (key/value, kept across reconnects and restarts).
 - Plugin metadata (name, version, author, description) in the top bar; projects autosave in the browser and can be exported/imported as `.psx.json`.
 - "Java" panel shows the generated source live; build errors are reported with line numbers.
 
@@ -70,15 +71,6 @@ npm run build      # static site in website/dist (served by the backend if prese
 ```
 
 Set `VITE_API_URL` (see `website/.env.example`) if the backend is hosted elsewhere.
-
-### Headless generation
-
-```bash
-cd website
-npm run gen -- my-project.psx.json --out ./out --build http://localhost:8080
-```
-
-Prints/writes the generated Java and optionally asks the backend to build the jar. Without arguments it uses the bundled starter project.
 
 ## Production
 

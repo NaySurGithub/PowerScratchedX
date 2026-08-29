@@ -83,6 +83,12 @@ Numbers, arithmetic, modulo, random, round, `number of`, comparisons, and/or/not
 ### Variables
 Global variables shared by all scripts (like Scratch "for all sprites"). They hold numbers, text or booleans.
 
+### Lists
+Named lists (`add … to list <name>`, `remove … from list`, `remove item #`, `replace item #`, `clear list`, `list contains`, `length of list`, `item #`, `position of`, `list joined with`, `for each item in list` + `current list item`). Lists are global, case-insensitive by name, and saved automatically in the plugin's data folder (`lists.json`), so they survive restarts.
+
+### Player data
+Key/value storage per player, kept across reconnects and restarts (`players.json`): `set data <key> of player to`, `change data … by`, `remove data`, `clear all data`, `data <key> of player`, `player has data <key>`, plus `set/get data of player named <name>` for offline players. Values can be text, numbers or booleans.
+
 ## Item and block ids
 
 Use Bedrock identifiers, e.g. `minecraft:diamond`, `minecraft:stone`. The `minecraft:` prefix is added automatically when missing.

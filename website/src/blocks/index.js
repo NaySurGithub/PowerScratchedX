@@ -424,6 +424,30 @@ const customDefs = [
   {
     type: 'fel_stepslider', message0: 'step slider %1 steps %2 default # %3', args0: [T('TEXT'), T('OPTIONS'), T('DEFAULT')], colour: C.forms, previousStatement: 'FormElement', nextStatement: 'FormElement', tooltip: 'Steps separated by commas. Default is 1-based.',
   },
+  // ---------------- LISTS ----------------
+  stmt('list_add', 'add %2 to list %1', [T('NAME'), T('VALUE')], C.lists, 'Lists are global and saved to lists.json'),
+  stmt('list_remove', 'remove %2 from list %1', [T('NAME'), T('VALUE')], C.lists, 'Removes the first matching item'),
+  stmt('list_remove_at', 'remove item # %2 of list %1', [T('NAME'), T('INDEX')], C.lists),
+  stmt('list_set', 'replace item # %2 of list %1 with %3', [T('NAME'), T('INDEX'), T('VALUE')], C.lists),
+  stmt('list_clear', 'clear list %1', [T('NAME')], C.lists),
+  val('list_contains', 'list %1 contains %2', [T('NAME'), T('VALUE')], C.lists, 'Boolean'),
+  val('list_length', 'length of list %1', [T('NAME')], C.lists, 'Number'),
+  val('list_item', 'item # %2 of list %1', [T('NAME'), T('INDEX')], C.lists, null, '1-based'),
+  val('list_index_of', 'position of %2 in list %1', [T('NAME'), T('VALUE')], C.lists, 'Number', '0 if not found'),
+  val('list_join', 'list %1 joined with %2', [T('NAME'), T('SEP')], C.lists, 'String'),
+  stmt('list_foreach', 'for each item in list %1 %2 %3', [T('NAME'), { type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }], C.lists, 'Inside, use "current list item"'),
+  val('list_current', 'current list item', [], C.lists, null),
+
+  // ---------------- PLAYER DATA ----------------
+  stmt('pdata_set', 'set data %2 of %1 to %3', [PLAYER, T('KEY'), T('VALUE')], C.pdata, 'Per-player value, kept when the player reconnects (players.json)'),
+  stmt('pdata_change', 'change data %2 of %1 by %3', [PLAYER, T('KEY'), T('DELTA')], C.pdata),
+  stmt('pdata_remove', 'remove data %2 of %1', [PLAYER, T('KEY')], C.pdata),
+  stmt('pdata_clear', 'clear all data of %1', [PLAYER], C.pdata),
+  val('pdata_get', 'data %2 of %1', [PLAYER, T('KEY')], C.pdata, null, 'Empty if not set'),
+  val('pdata_has', '%1 has data %2', [PLAYER, T('KEY')], C.pdata, 'Boolean'),
+  stmt('pdata_set_name', 'set data %2 of player named %1 to %3', [T('NAME'), T('KEY'), T('VALUE')], C.pdata, 'Works even if the player is offline'),
+  val('pdata_get_name', 'data %2 of player named %1', [T('NAME'), T('KEY')], C.pdata, null, 'Works even if the player is offline'),
+
   val('form_button_text', 'clicked button text', [], C.forms, 'String'),
   val('form_button_index', 'clicked button number', [], C.forms, 'Number', '1 for the first button'),
   val('form_value', 'form value # %1', [T('INDEX')], C.forms, null, 'Value of the nth element (1-based): text for inputs/dropdowns/step sliders, number for sliders, true/false for toggles'),

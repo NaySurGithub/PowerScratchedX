@@ -19,10 +19,6 @@ jobs:
           cache: npm
           cache-dependency-path: website/package-lock.json
       - run: npm ci
-      - run: npm run gen
-      - run: npm run gen -- scripts/fixtures/custom-content.psx.json
-      - run: npm run gen -- scripts/fixtures/forms.psx.json
-      - run: npm run coverage
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:

@@ -12,4 +12,6 @@ export const C = {
   blocks: '#8B5A2B',
   packets: '#5C6BC0',
   forms: '#C2185B',
+  lists: '#FF661A',
+  pdata: '#0097A7',
 };
