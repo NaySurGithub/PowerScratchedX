@@ -267,7 +267,7 @@ const customDefs = [
   filterHat('evt_item_hit', 'when a player hits an entity with item %1', 'Empty = any item. Use "target" blocks for the hit entity.', C.items),
   filterHat('evt_item_consume', 'when a player eats item %1', 'Empty = any food', C.items),
   filterHat('evt_item_held', 'when a player switches to item %1', 'Empty = any item', C.items),
-  val('item_full_id', 'custom item id %1', [ITEM_ID()], C.items, 'String', 'Full id, e.g. myplugin:ruby_sword — use it with "give"'),
+  val('item_full_id', 'custom item id %1', [ITEM_ID()], C.items, 'String', 'Full id, e.g. myplugin:ruby_sword - use it with "give"'),
   stmt('item_cooldown_set', 'start cooldown of item %2 for %1 : %3 s', [PLAYER, T('ITEM'), T('SECONDS')], C.items),
   val('item_cooldown_active', 'item %2 is on cooldown for %1', [PLAYER, T('ITEM')], C.items, 'Boolean'),
   val('player_holding', '%1 is holding %2', [PLAYER, T('ITEM')], C.items, 'Boolean'),

@@ -7,10 +7,10 @@ Build [PowerNukkitX](https://github.com/PowerNukkitX/PowerNukkitX) plugins with 
 
 ## Features
 
-- Events: plugin start/stop, join, quit, chat, command, block break/place, interact, death, respawn, damage, move — with `cancel event`, message/damage accessors and setters.
-- Player actions: messages, titles, action bar, teleport, give item, kick, gamemode, health, food, effects, fire, xp, run command, op, sounds, display name — plus reporters (name, health, coords, world, permission checks...).
+- Events: plugin start/stop, join, quit, chat, command, block break/place, interact, death, respawn, damage, move - with `cancel event`, message/damage accessors and setters.
+- Player actions: messages, titles, action bar, teleport, give item, kick, gamemode, health, food, effects, fire, xp, run command, op, sounds, display name - plus reporters (name, health, coords, world, permission checks...).
 - Server: broadcast, console commands, logging, loop over online players, set/get blocks, world time, sounds.
-- Custom items: plain items, swords, pickaxes, axes, shovels, hoes, armor pieces and food with tier, texture, damage, durability, glint, cooldown, armor points, nutrition — plus events for using, hitting with, eating or switching to an item, cooldown blocks and "target" blocks for the entity hit.
+- Custom items: plain items, swords, pickaxes, axes, shovels, hoes, armor pieces and food with tier, texture, damage, durability, glint, cooldown, armor points, nutrition - plus events for using, hitting with, eating or switching to an item, cooldown blocks and "target" blocks for the entity hit.
 - Custom blocks with hardness, resistance, light, friction and a click event.
 - Custom commands with description and permission, sender/argument reporters, permission declarations (`plugin.yml`).
 - Config: default values (`config.yml`), get/set/has/reload.
@@ -23,7 +23,7 @@ Build [PowerNukkitX](https://github.com/PowerNukkitX/PowerNukkitX) plugins with 
 
 ### 1. Backend
 
-Requirements: JDK 21+ (a JDK, not a JRE — the server needs `javac`), a PowerNukkitX jar.
+Requirements: JDK 21+ (a JDK, not a JRE - the server needs `javac`), a PowerNukkitX jar.
 
 ```bash
 cd backend
@@ -99,4 +99,4 @@ docs/      Additional documentation
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
