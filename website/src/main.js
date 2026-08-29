@@ -12,9 +12,12 @@ import './style.css';
 const $ = (id) => document.getElementById(id);
 const PHONE = window.matchMedia('(max-width: 760px)');
 
-Blockly.config.snapRadius = 48;
-Blockly.config.connectingSnapRadius = 68;
-Blockly.config.currentConnectionPreference = 20;
+Blockly.config.snapRadius = 36;
+Blockly.config.connectingSnapRadius = 40;
+
+if (import.meta.hot) {
+  import.meta.hot.accept(() => window.location.reload());
+}
 
 let workspace = null;
 let meta = defaultMeta();

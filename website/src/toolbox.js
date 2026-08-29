@@ -207,6 +207,7 @@ export const toolbox = {
         block('op_to_number', { VALUE: shadowText('42') }),
         { kind: 'sep' },
         block('logic_compare', { A: shadowNum(1), B: shadowNum(1) }),
+        block('logic_compare', { A: shadowText('abc'), B: shadowText('abc') }),
         block('logic_operation'),
         block('logic_negate'),
         block('logic_boolean'),
