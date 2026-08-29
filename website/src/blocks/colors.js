@@ -10,4 +10,6 @@ export const C = {
   time: '#CF63CF',
   items: '#E05252',
   blocks: '#8B5A2B',
+  packets: '#5C6BC0',
+  forms: '#C2185B',
 };

@@ -116,6 +116,59 @@ export const toolbox = {
       ],
     },
     {
+      kind: 'category', name: 'Packets', colour: C.packets,
+      contents: [
+        block('evt_packet_receive'), block('evt_packet_send'),
+        block('packet_type'),
+        block('packet_get', { FIELD: shadowText('message') }),
+        block('packet_set', { FIELD: shadowText('message'), VALUE: shadowText('') }),
+        { kind: 'sep' },
+        {
+          kind: 'block', type: 'packet_send', inputs: {
+            PLAYER: shadowPlayer(),
+            FIELDS: { block: { type: 'pfield', fields: { FIELD: 'title' }, inputs: { VALUE: shadowText('Hello') }, next: { block: { type: 'pfield', fields: { FIELD: 'content' }, inputs: { VALUE: shadowText('World') } } } } },
+          },
+        },
+        block('pfield', { VALUE: shadowText('') }),
+        withPlayer('packet_transfer', { ADDRESS: shadowText('play.example.com'), PORT: shadowNum(19132) }),
+        withPlayer('packet_toast', { TITLE: shadowText('Title'), CONTENT: shadowText('Message') }),
+      ],
+    },
+    {
+      kind: 'category', name: 'Forms', colour: C.forms,
+      contents: [
+        {
+          kind: 'block', type: 'form_simple', inputs: {
+            PLAYER: shadowPlayer(), TITLE: shadowText('Menu'), CONTENT: shadowText('Choose an option'),
+            ELEMENTS: { block: { type: 'fbutton', inputs: { TEXT: shadowText('Option 1'), IMAGE: shadowText('') }, next: { block: { type: 'fbutton', inputs: { TEXT: shadowText('Option 2'), IMAGE: shadowText('') } } } } },
+          },
+        },
+        block('fbutton', { TEXT: shadowText('Button'), IMAGE: shadowText('') }),
+        {
+          kind: 'block', type: 'form_modal', inputs: {
+            PLAYER: shadowPlayer(), TITLE: shadowText('Confirm'), CONTENT: shadowText('Are you sure?'), YES: shadowText('Yes'), NO: shadowText('No'),
+          },
+        },
+        {
+          kind: 'block', type: 'form_custom', inputs: {
+            PLAYER: shadowPlayer(), TITLE: shadowText('Settings'),
+            ELEMENTS: { block: { type: 'fel_input', inputs: { TEXT: shadowText('Your name'), PLACEHOLDER: shadowText('Steve'), DEFAULT: shadowText('') }, next: { block: { type: 'fel_toggle', inputs: { TEXT: shadowText('Enable') } } } } },
+          },
+        },
+        block('fel_label', { TEXT: shadowText('Some text') }),
+        block('fel_header', { TEXT: shadowText('Section') }),
+        block('fel_divider'),
+        block('fel_input', { TEXT: shadowText('Name'), PLACEHOLDER: shadowText(''), DEFAULT: shadowText('') }),
+        block('fel_toggle', { TEXT: shadowText('Enable') }),
+        block('fel_slider', { TEXT: shadowText('Amount'), MIN: shadowNum(0), MAX: shadowNum(100), STEP: shadowNum(1), DEFAULT: shadowNum(50) }),
+        block('fel_dropdown', { TEXT: shadowText('Color'), OPTIONS: shadowText('Red, Green, Blue'), DEFAULT: shadowNum(1) }),
+        block('fel_stepslider', { TEXT: shadowText('Size'), OPTIONS: shadowText('Small, Medium, Large'), DEFAULT: shadowNum(2) }),
+        { kind: 'sep' },
+        block('form_button_text'), block('form_button_index'),
+        block('form_value', { INDEX: shadowNum(1) }), block('form_value_index', { INDEX: shadowNum(1) }),
+      ],
+    },
+    {
       kind: 'category', name: 'Config', colour: C.config,
       contents: [
         block('cfg_default', { VALUE: shadowText('value') }),

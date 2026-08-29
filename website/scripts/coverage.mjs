@@ -46,10 +46,17 @@ for (const entry of entries) {
     defineBlocks[entry.type] = block;
     continue;
   }
+  if (entry.type === 'packet_send' || entry.type === 'form_simple' || entry.type === 'form_custom') {
+    defineBlocks[entry.type] = block;
+    appendStatement(block);
+    continue;
+  }
+  const OWNERS = { ItemProp: ['item_define', 'PROPS'], BlockProp: ['block_define', 'PROPS'], PacketField: ['packet_send', 'FIELDS'], FormButton: ['form_simple', 'ELEMENTS'], FormElement: ['form_custom', 'ELEMENTS'] };
   const propCheck = block.previousConnection && block.previousConnection.getCheck();
-  if (propCheck && (propCheck.includes('ItemProp') || propCheck.includes('BlockProp'))) {
-    const owner = defineBlocks[propCheck.includes('ItemProp') ? 'item_define' : 'block_define'];
-    const input = owner.getInput('PROPS').connection;
+  const ownerKey = propCheck && Object.keys(OWNERS).find((k) => propCheck.includes(k));
+  if (ownerKey) {
+    const owner = defineBlocks[OWNERS[ownerKey][0]];
+    const input = owner.getInput(OWNERS[ownerKey][1]).connection;
     const last = input.targetBlock() ? input.targetBlock().lastConnectionInStack(false) : input;
     last.connect(block.previousConnection);
     continue;

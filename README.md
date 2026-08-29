@@ -19,6 +19,8 @@ Build [PowerNukkitX](https://github.com/PowerNukkitX/PowerNukkitX) plugins with 
 - Custom items: plain items, swords, pickaxes, axes, shovels, hoes, armor pieces and food with tier, texture, damage, durability, glint, cooldown, armor points, nutrition - plus events for using, hitting with, eating or switching to an item, cooldown blocks and "target" blocks for the entity hit.
 - Custom blocks with hardness, resistance, light, friction and a click event.
 - A resource pack (`.mcpack`) is generated alongside the JAR when the plugin has custom items or blocks, mapping them to the chosen textures; drop it in the server's `resource_packs/` folder.
+- Forms: button forms (with images), yes/no forms and custom forms (inputs, toggles, sliders, dropdowns, step sliders) with the response scripts nested in the block.
+- Packets: react to any Bedrock packet received or sent (filter by type, read/modify fields, cancel), and send any packet by class name with fields set by name - plus transfer and toast shortcuts.
 - Custom commands with description and permission, sender/argument reporters, permission declarations (`plugin.yml`).
 - Config: default values (`config.yml`), get/set/has/reload.
 - Time: repeating tasks (`every N ticks`) and delayed tasks (`wait N ticks then`).

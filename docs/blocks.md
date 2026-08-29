@@ -49,6 +49,25 @@ Cooldowns: a cooldown property is enforced automatically by `when a player uses 
 ### Custom Blocks
 `custom block <id> named <name> texture <name>` with properties `hardness`, `explosion resistance`, `light emission`, `friction`, `lets light through`. `when a player clicks block <id>` runs on left/right click (empty = any block). `custom block id` gives the full id for `set block` / `give`. Block textures use vanilla terrain texture names (`stone`, `diamond_block`, `oak_planks`…) or a full path; they are mapped in the generated resource pack too.
 
+### Packets
+Low-level access to the Bedrock protocol (Cloudburst packet classes, e.g. `TextPacket`, `SetTitlePacket`, `PlayerAuthInputPacket`, `TransferPacket`).
+
+- `when packet <Type> is received from a player` / `when packet <Type> is sent to a player` (empty type = every packet; the `Packet` suffix is optional). Use `cancel event` to drop the packet.
+- `packet type` (class name), `packet field <name>` (reads a getter by name: `message`, `serverAddress`, `position`...), `set packet field <name> to <value>` (calls the setter before the packet is handled or sent).
+- `send packet <Type> to player` with a list of `field <name> = <value>` blocks: creates the packet by class name, fills the fields and sends it. Values are converted to the setter's type: numbers, text, booleans, enums (by name or index) and vectors (`"x y z"`).
+- Shortcuts: `transfer player to server <address> port <port>` (TransferPacket) and `show toast <title> <content>` (ToastRequestPacket).
+
+Field names are the Lombok property names of the packet class (the setter without `set`, case-insensitive). Complex fields (lists, NBT, custom objects) cannot be set from blocks.
+
+### Forms
+Bedrock UI forms, with the response scripts directly inside the block:
+
+- `show button form to player title … content …` with `button <text> image <url or pack path>` blocks; `when a button is clicked` runs with `clicked button text` / `clicked button number` (1-based); `when closed` runs when the player dismisses the form.
+- `show yes/no form` with custom button labels and `when yes` / `when no` scripts.
+- `show custom form` with elements `label`, `header`, `divider`, `text input`, `toggle`, `slider`, `dropdown` (comma-separated options), `step slider`; `when submitted` runs with `form value #n` (text of inputs/dropdowns/step sliders, number for sliders, true/false for toggles) and `form choice number #n` (selected option, 1-based). `n` is the element position, labels/headers/dividers included.
+
+Inside the response scripts, `player` is the player who answered, and everything from the surrounding context (command sender, arguments, event) is still available.
+
 ### Config
 `config: key defaults to value` (writes `config.yml`, saved on first run), `config key`, `set config key to`, `config has key`, `reload config`.
 

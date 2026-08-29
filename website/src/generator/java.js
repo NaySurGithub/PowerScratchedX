@@ -446,11 +446,27 @@ const FILTER_HATS = {
     setup: 'c.player = event.getPlayer(); c.item = event.getItem(); c.block = event.getBlock();',
     check: (id) => `if (!blockIs(c.block, ${jstr(id)})) return;`,
   },
+  evt_packet_receive: {
+    cls: 'org.powernukkitx.event.server.PacketReceiveEvent',
+    pre: '',
+    setup: 'c.player = event.getPlayer(); c.packet = event.getPacket();',
+    check: (id) => `if (!packetIs(c.packet, ${jstr(id)})) return;`,
+    field: 'TYPE',
+  },
+  evt_packet_send: {
+    cls: 'org.powernukkitx.event.server.PacketSendEvent',
+    pre: '',
+    setup: 'c.player = event.getPlayer(); c.packet = event.getPacket();',
+    check: (id) => `if (!packetIs(c.packet, ${jstr(id)})) return;`,
+    field: 'TYPE',
+  },
 };
+
+const packetType = (s) => String(s || '').trim().replace(/[^A-Za-z0-9_]/g, '');
 
 for (const [type, info] of Object.entries(FILTER_HATS)) {
   G[type] = function (block) {
-    const id = filterId(block.getFieldValue('ID'));
+    const id = info.field ? packetType(block.getFieldValue(info.field)) : filterId(block.getFieldValue('ID'));
     if (info.use && id) javaGenerator.ctx.usedItemIds.add(id);
     const n = nextId();
     method(`h${n}`, statements(block, 'DO'));
@@ -460,6 +476,93 @@ for (const [type, info] of Object.entries(FILTER_HATS)) {
     return '';
   };
 }
+
+G.packet_type = () => ['(c.packet == null ? "" : c.packet.getClass().getSimpleName())', ORDER];
+G.packet_get = (b) => [`packetGet(c.packet, ${str(b, 'FIELD')})`, ORDER];
+G.packet_set = (b) => `packetSet(c.packet, ${str(b, 'FIELD')}, ${v(b, 'VALUE')});\n`;
+G.pfield = () => '';
+G.packet_send = (b) => {
+  const type = packetType(b.getFieldValue('TYPE'));
+  if (!type) return '';
+  const sets = [];
+  let f = b.getInputTargetBlock('FIELDS');
+  while (f) {
+    if (f.type === 'pfield') {
+      const name = String(f.getFieldValue('FIELD') || '').trim();
+      if (name) sets.push(`packetSet(pk, ${jstr(name)}, ${v(f, 'VALUE')});`);
+    }
+    f = f.getNextBlock();
+  }
+  return withPlayer(b, `Object pk = packetNew(${jstr(type)}); if (pk != null) { ${sets.join(' ')} p.sendPacket((org.cloudburstmc.protocol.bedrock.packet.BedrockPacket) pk); }`);
+};
+G.packet_transfer = (b) => withPlayer(b, `Object pk = packetNew("TransferPacket"); if (pk != null) { packetSet(pk, "serverAddress", ${str(b, 'ADDRESS')}); packetSet(pk, "serverPort", ${num(b, 'PORT', '19132')}); p.sendPacket((org.cloudburstmc.protocol.bedrock.packet.BedrockPacket) pk); }`);
+G.packet_toast = (b) => withPlayer(b, `Object pk = packetNew("ToastRequestPacket"); if (pk != null) { packetSet(pk, "title", ${str(b, 'TITLE')}); packetSet(pk, "content", ${str(b, 'CONTENT')}); p.sendPacket((org.cloudburstmc.protocol.bedrock.packet.BedrockPacket) pk); }`);
+
+function formCallback(block, name, setup) {
+  const body = statements(block, name);
+  if (!body.trim()) return null;
+  const m = hoist(body);
+  return `(pl${setup.includes('r') ? ', r' : ''}) -> { Ctx c3 = c2.copy(); c3.player = pl; ${setup} ${m}(c3); }`;
+}
+
+function formElements(block, name, fn) {
+  const lines = [];
+  let el = block.getInputTargetBlock(name);
+  while (el) {
+    const line = fn(el);
+    if (line) lines.push(line);
+    el = el.getNextBlock();
+  }
+  return lines;
+}
+
+const optionList = (b, name) => `java.util.Arrays.asList(${str(b, name)}.split("\\\\s*,\\\\s*"))`;
+
+G.form_simple = (b) => {
+  const buttons = formElements(b, 'ELEMENTS', (el) => {
+    if (el.type !== 'fbutton') return '';
+    return `form.addButton(${str(el, 'TEXT')}, buttonImage(${str(el, 'IMAGE')}));`;
+  });
+  const submit = formCallback(b, 'ON_SUBMIT', 'c3.formButton = r.buttonId(); c3.formText = r.button() == null ? "" : str(r.button().text());');
+  const close = formCallback(b, 'ON_CLOSE', '');
+  return withPlayer(b, `org.powernukkitx.form.window.SimpleForm form = new org.powernukkitx.form.window.SimpleForm(${str(b, 'TITLE')}, ${str(b, 'CONTENT')}); ${buttons.join(' ')} Ctx c2 = c.copy(); ${submit ? `form.onSubmit(${submit});` : ''} ${close ? `form.onClose(${close});` : ''} form.send(p);`);
+};
+
+G.fbutton = () => '';
+
+G.form_modal = (b) => {
+  const yes = formCallback(b, 'ON_YES', '');
+  const no = formCallback(b, 'ON_NO', '');
+  return withPlayer(b, `org.powernukkitx.form.window.ModalForm form = new org.powernukkitx.form.window.ModalForm(${str(b, 'TITLE')}, ${str(b, 'CONTENT')}); form.text(${str(b, 'YES')}, ${str(b, 'NO')}); Ctx c2 = c.copy(); ${yes ? `form.onYes(${yes});` : ''} ${no ? `form.onNo(${no});` : ''} form.send(p);`);
+};
+
+G.form_custom = (b) => {
+  const elements = formElements(b, 'ELEMENTS', (el) => {
+    switch (el.type) {
+      case 'fel_label': return `form.addLabel(${str(el, 'TEXT')});`;
+      case 'fel_header': return `form.addElement(new org.powernukkitx.form.element.ElementHeader(${str(el, 'TEXT')}));`;
+      case 'fel_divider': return 'form.addElement(new org.powernukkitx.form.element.ElementDivider());';
+      case 'fel_input': return `form.addInput(${str(el, 'TEXT')}, ${str(el, 'PLACEHOLDER')}, ${str(el, 'DEFAULT')});`;
+      case 'fel_toggle': return `form.addToggle(${str(el, 'TEXT')}, ${el.getFieldValue('DEFAULT') === 'true'});`;
+      case 'fel_slider': return `form.addSlider(${str(el, 'TEXT')}, (float) ${num(el, 'MIN')}, (float) ${num(el, 'MAX', '100')}, Math.max(1, (int) ${num(el, 'STEP', '1')}), (float) ${num(el, 'DEFAULT')});`;
+      case 'fel_dropdown': return `form.addDropdown(${str(el, 'TEXT')}, ${optionList(el, 'OPTIONS')}, Math.max(0, (int) ${num(el, 'DEFAULT', '1')} - 1));`;
+      case 'fel_stepslider': return `form.addStepSlider(${str(el, 'TEXT')}, ${optionList(el, 'OPTIONS')}, Math.max(0, (int) ${num(el, 'DEFAULT', '1')} - 1));`;
+      default: return '';
+    }
+  });
+  const submit = formCallback(b, 'ON_SUBMIT', 'c3.formResponse = r;');
+  const close = formCallback(b, 'ON_CLOSE', '');
+  return withPlayer(b, `org.powernukkitx.form.window.CustomForm form = new org.powernukkitx.form.window.CustomForm(${str(b, 'TITLE')}); ${elements.join(' ')} Ctx c2 = c.copy(); ${submit ? `form.onSubmit(${submit});` : ''} ${close ? `form.onClose(${close});` : ''} form.send(p);`);
+};
+
+for (const t of ['fel_label', 'fel_header', 'fel_divider', 'fel_input', 'fel_toggle', 'fel_slider', 'fel_dropdown', 'fel_stepslider']) {
+  G[t] = () => '';
+}
+
+G.form_button_text = () => ['(c.formText)', ORDER];
+G.form_button_index = () => ['((double) (c.formButton + 1))', ORDER];
+G.form_value = (b) => [`formValue(c.formResponse, (int) ${num(b, 'INDEX', '1')})`, ORDER];
+G.form_value_index = (b) => [`formChoice(c.formResponse, (int) ${num(b, 'INDEX', '1')})`, ORDER];
 
 G.item_full_id = (b) => [`(NS + ":" + ${jstr(cleanId(b.getFieldValue('ID')))})`, ORDER];
 G.block_full_id = (b) => [`(NS + ":" + ${jstr(cleanId(b.getFieldValue('ID')))})`, ORDER];
@@ -831,7 +934,11 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
         Block block;
         Item item;
         Entity target;
+        Object packet;
         double damage;
+        int formButton = -1;
+        String formText = "";
+        Object formResponse;
 
         Ctx copy() {
             Ctx n = new Ctx();
@@ -843,9 +950,122 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
             n.block = block;
             n.item = item;
             n.target = target;
+            n.packet = packet;
             n.damage = damage;
+            n.formButton = formButton;
+            n.formText = formText;
+            n.formResponse = formResponse;
             return n;
         }
+    }
+
+    private static org.powernukkitx.form.element.simple.ButtonImage buttonImage(String image) {
+        if (image == null || image.isBlank()) return null;
+        String path = image.trim();
+        boolean url = path.startsWith("http://") || path.startsWith("https://");
+        return new org.powernukkitx.form.element.simple.ButtonImage(url ? org.powernukkitx.form.element.simple.ButtonImage.Type.URL : org.powernukkitx.form.element.simple.ButtonImage.Type.PATH, path);
+    }
+
+    private static Object formValue(Object response, int index) {
+        if (!(response instanceof org.powernukkitx.form.response.CustomResponse custom)) return "";
+        try {
+            Object value = custom.getResponse(index - 1);
+            if (value instanceof org.powernukkitx.form.response.ElementResponse element) return element.elementText();
+            if (value instanceof Float f) return f.doubleValue();
+            return value == null ? "" : value;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static double formChoice(Object response, int index) {
+        if (!(response instanceof org.powernukkitx.form.response.CustomResponse custom)) return 0;
+        try {
+            Object value = custom.getResponse(index - 1);
+            if (value instanceof org.powernukkitx.form.response.ElementResponse element) return element.elementId() + 1;
+            return num(value);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private static boolean packetIs(Object packet, String type) {
+        if (type == null || type.isEmpty()) return true;
+        if (packet == null) return false;
+        String name = packet.getClass().getSimpleName();
+        return name.equalsIgnoreCase(type) || name.equalsIgnoreCase(type + "Packet");
+    }
+
+    private Object packetNew(String type) {
+        String name = type.endsWith("Packet") ? type : type + "Packet";
+        try {
+            return Class.forName("org.cloudburstmc.protocol.bedrock.packet." + name).getConstructor().newInstance();
+        } catch (ReflectiveOperationException e) {
+            getLogger().warning("Unknown packet type: " + type);
+            return null;
+        }
+    }
+
+    private static void packetSet(Object packet, String field, Object value) {
+        if (packet == null || field == null || field.isEmpty()) return;
+        String setter = "set" + field;
+        for (java.lang.reflect.Method m : packet.getClass().getMethods()) {
+            if (m.getParameterCount() == 1 && m.getName().equalsIgnoreCase(setter)) {
+                try {
+                    m.invoke(packet, packetValue(value, m.getParameterTypes()[0]));
+                } catch (ReflectiveOperationException | IllegalArgumentException ignored) {
+                    // incompatible value
+                }
+                return;
+            }
+        }
+    }
+
+    private static Object packetGet(Object packet, String field) {
+        if (packet == null || field == null || field.isEmpty()) return "";
+        for (java.lang.reflect.Method m : packet.getClass().getMethods()) {
+            if (m.getParameterCount() == 0 && (m.getName().equalsIgnoreCase("get" + field) || m.getName().equalsIgnoreCase("is" + field))) {
+                try {
+                    Object result = m.invoke(packet);
+                    if (result instanceof Enum<?> e) return e.name();
+                    return result == null ? "" : result;
+                } catch (ReflectiveOperationException e) {
+                    return "";
+                }
+            }
+        }
+        return "";
+    }
+
+    private static Object packetValue(Object value, Class<?> type) {
+        if (type == String.class) return str(value);
+        if (type == int.class || type == Integer.class) return (int) num(value);
+        if (type == long.class || type == Long.class) return (long) num(value);
+        if (type == float.class || type == Float.class) return (float) num(value);
+        if (type == double.class || type == Double.class) return num(value);
+        if (type == short.class || type == Short.class) return (short) num(value);
+        if (type == byte.class || type == Byte.class) return (byte) num(value);
+        if (type == boolean.class || type == Boolean.class) return bool(value);
+        if (type.isEnum()) {
+            String wanted = str(value).trim();
+            Object[] constants = type.getEnumConstants();
+            if (value instanceof Number n && n.intValue() >= 0 && n.intValue() < constants.length) return constants[n.intValue()];
+            for (Object constant : constants) {
+                if (((Enum<?>) constant).name().equalsIgnoreCase(wanted)) return constant;
+            }
+            return constants.length > 0 ? constants[0] : null;
+        }
+        if (type == java.util.UUID.class) return java.util.UUID.fromString(str(value));
+        if (type == org.cloudburstmc.math.vector.Vector3f.class || type == org.cloudburstmc.math.vector.Vector3i.class || type == org.cloudburstmc.math.vector.Vector2f.class) {
+            String[] parts = str(value).trim().split("[\\s,;]+");
+            double x = parts.length > 0 ? num(parts[0]) : 0;
+            double y = parts.length > 1 ? num(parts[1]) : 0;
+            double z = parts.length > 2 ? num(parts[2]) : 0;
+            if (type == org.cloudburstmc.math.vector.Vector3i.class) return org.cloudburstmc.math.vector.Vector3i.from((int) x, (int) y, (int) z);
+            if (type == org.cloudburstmc.math.vector.Vector2f.class) return org.cloudburstmc.math.vector.Vector2f.from((float) x, (float) y);
+            return org.cloudburstmc.math.vector.Vector3f.from((float) x, (float) y, (float) z);
+        }
+        return type.isInstance(value) ? value : null;
     }
 
     private static String resolveId(String id) {

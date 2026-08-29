@@ -1,0 +1,62 @@
+{
+  "format": "powerscratchedx",
+  "formatVersion": 1,
+  "meta": { "name": "FormsDemo", "version": "1.0.0", "author": "test", "description": "forms and packets" },
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "cmd_hat", "x": 20, "y": 20, "fields": { "NAME": "menu", "DESC": "Open the menu", "PERM": "" },
+          "inputs": { "DO": { "block": {
+            "type": "form_simple",
+            "inputs": {
+              "PLAYER": { "shadow": { "type": "player_current" } },
+              "TITLE": { "shadow": { "type": "text", "fields": { "TEXT": "Menu" } } },
+              "CONTENT": { "shadow": { "type": "text", "fields": { "TEXT": "Pick one" } } },
+              "ELEMENTS": { "block": { "type": "fbutton", "inputs": { "TEXT": { "shadow": { "type": "text", "fields": { "TEXT": "Heal" } } }, "IMAGE": { "shadow": { "type": "text", "fields": { "TEXT": "textures/items/apple" } } } },
+                "next": { "block": { "type": "fbutton", "inputs": { "TEXT": { "shadow": { "type": "text", "fields": { "TEXT": "Settings" } } }, "IMAGE": { "shadow": { "type": "text", "fields": { "TEXT": "" } } } } } } } },
+              "ON_SUBMIT": { "block": {
+                "type": "controls_if",
+                "inputs": {
+                  "IF0": { "block": { "type": "logic_compare", "fields": { "OP": "EQ" }, "inputs": { "A": { "block": { "type": "form_button_index" } }, "B": { "shadow": { "type": "math_number", "fields": { "NUM": 1 } } } } } },
+                  "DO0": { "block": { "type": "player_set_health", "inputs": { "PLAYER": { "shadow": { "type": "player_current" } }, "VALUE": { "shadow": { "type": "math_number", "fields": { "NUM": 20 } } } } } }
+                },
+                "next": { "block": {
+                  "type": "form_custom",
+                  "inputs": {
+                    "PLAYER": { "shadow": { "type": "player_current" } },
+                    "TITLE": { "shadow": { "type": "text", "fields": { "TEXT": "Settings" } } },
+                    "ELEMENTS": { "block": { "type": "fel_input", "inputs": { "TEXT": { "shadow": { "type": "text", "fields": { "TEXT": "Nickname" } } }, "PLACEHOLDER": { "shadow": { "type": "text", "fields": { "TEXT": "" } } }, "DEFAULT": { "shadow": { "type": "text", "fields": { "TEXT": "" } } } },
+                      "next": { "block": { "type": "fel_dropdown", "inputs": { "TEXT": { "shadow": { "type": "text", "fields": { "TEXT": "Color" } } }, "OPTIONS": { "shadow": { "type": "text", "fields": { "TEXT": "Red, Green, Blue" } } }, "DEFAULT": { "shadow": { "type": "math_number", "fields": { "NUM": 1 } } } },
+                        "next": { "block": { "type": "fel_slider", "inputs": { "TEXT": { "shadow": { "type": "text", "fields": { "TEXT": "Volume" } } }, "MIN": { "shadow": { "type": "math_number", "fields": { "NUM": 0 } } }, "MAX": { "shadow": { "type": "math_number", "fields": { "NUM": 10 } } }, "STEP": { "shadow": { "type": "math_number", "fields": { "NUM": 1 } } }, "DEFAULT": { "shadow": { "type": "math_number", "fields": { "NUM": 5 } } } },
+                          "next": { "block": { "type": "fel_toggle", "fields": { "DEFAULT": "true" }, "inputs": { "TEXT": { "shadow": { "type": "text", "fields": { "TEXT": "Sounds" } } } } } } } } } } } },
+                    "ON_SUBMIT": { "block": { "type": "player_send_message", "inputs": { "PLAYER": { "shadow": { "type": "player_current" } }, "TEXT": { "shadow": { "type": "text", "fields": { "TEXT": "" } }, "block": { "type": "text_join", "extraState": { "itemCount": 4 }, "inputs": {
+                      "ADD0": { "block": { "type": "form_value", "inputs": { "INDEX": { "shadow": { "type": "math_number", "fields": { "NUM": 1 } } } } } },
+                      "ADD1": { "block": { "type": "form_value", "inputs": { "INDEX": { "shadow": { "type": "math_number", "fields": { "NUM": 2 } } } } } },
+                      "ADD2": { "block": { "type": "form_value_index", "inputs": { "INDEX": { "shadow": { "type": "math_number", "fields": { "NUM": 2 } } } } } },
+                      "ADD3": { "block": { "type": "form_value", "inputs": { "INDEX": { "shadow": { "type": "math_number", "fields": { "NUM": 4 } } } } } }
+                    } } } } } },
+                    "ON_CLOSE": { "block": { "type": "cmd_reply", "inputs": { "TEXT": { "shadow": { "type": "text", "fields": { "TEXT": "Closed" } } } } } }
+                  }
+                } }
+              } },
+              "ON_CLOSE": { "block": { "type": "form_modal", "inputs": {
+                "PLAYER": { "shadow": { "type": "player_current" } },
+                "TITLE": { "shadow": { "type": "text", "fields": { "TEXT": "Quit?" } } },
+                "CONTENT": { "shadow": { "type": "text", "fields": { "TEXT": "Really?" } } },
+                "YES": { "shadow": { "type": "text", "fields": { "TEXT": "Yes" } } },
+                "NO": { "shadow": { "type": "text", "fields": { "TEXT": "No" } } },
+                "ON_YES": { "block": { "type": "player_kick", "inputs": { "PLAYER": { "shadow": { "type": "player_current" } }, "REASON": { "shadow": { "type": "text", "fields": { "TEXT": "Bye" } } } } } }
+              } } }
+            }
+          } } }
+        },
+        {
+          "type": "evt_packet_receive", "x": 600, "y": 20, "fields": { "TYPE": "TextPacket" },
+          "inputs": { "DO": { "block": { "type": "server_log", "inputs": { "TEXT": { "shadow": { "type": "text", "fields": { "TEXT": "" } }, "block": { "type": "packet_get", "inputs": { "FIELD": { "shadow": { "type": "text", "fields": { "TEXT": "messageType" } } } } } } } } } }
+        }
+      ]
+    }
+  }
+}
