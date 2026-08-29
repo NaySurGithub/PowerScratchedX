@@ -22,6 +22,11 @@ Blocks that need a value the context does not have fall back to a neutral defaul
 ### Events
 `when plugin starts/stops`, `when a player joins/leaves/chats/runs a command`, `when a player breaks/places a block`, `when a player interacts`, `when a player dies/respawns/takes damage/moves`, `cancel event`, `event message`, `set chat message`, `set join/quit/death message`, `event block id / x y z`, `event item id`, `event damage`, `set event damage`.
 
+### Events from other plugins
+`when custom event <full class name> happens` listens to an event class exposed by another plugin (e.g. `nay.amethyst.api.PlayerViolationEvent`). The listener is registered by reflection at startup, so the other plugin does not need to be present when the JAR is built; if the class is missing at runtime a warning is logged and the script is simply never called. Inside, `player` is filled from the event when it exposes one (`getPlayer`, `getEntity`, `getDamager`), `event field <name>` reads any getter, `set event field <name> to` writes a setter, and `cancel event` works if the event is cancellable.
+
+Add `needs plugin <name> required/optional` so the other plugin is listed in `depend`/`softdepend` and loads first.
+
 ### Player
 Actions: `send`, `show title`, `show action bar/popup/tip`, `teleport to x y z / to player / to spawn`, `give item`, `clear inventory`, `kick`, `set gamemode`, `set health`, `set food`, `give effect`, `clear effects`, `set on fire`, `give xp`, `make run command`, `make/remove operator`, `play sound`, `set display name`.
 

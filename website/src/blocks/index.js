@@ -63,6 +63,28 @@ const defs = [
   val('evt_item_id', 'event item id', [], C.events, 'String'),
   val('evt_damage', 'event damage', [], C.events, 'Number'),
   stmt('evt_set_damage', 'set event damage to %1', [T('VALUE')], C.events),
+  {
+    type: 'evt_custom',
+    message0: 'when custom event %1 happens',
+    args0: [{ type: 'field_input', name: 'CLASS', text: 'nay.amethyst.api.PlayerViolationEvent' }],
+    message1: '%1',
+    args1: [{ type: 'input_statement', name: 'DO' }],
+    colour: C.events,
+    hat: 'cap',
+    tooltip: 'Full class name of an event from another plugin. That plugin must be installed and declared with "needs plugin".',
+  },
+  val('evt_field', 'event field %1', [T('FIELD')], C.events, null, 'Reads a getter of the event by name (e.g. violations, checkName)'),
+  stmt('evt_set_field', 'set event field %1 to %2', [T('FIELD'), T('VALUE')], C.events),
+  {
+    type: 'plugin_depend',
+    message0: 'needs plugin %1 %2',
+    args0: [
+      { type: 'field_input', name: 'NAME', text: 'Amethyst' },
+      { type: 'field_dropdown', name: 'KIND', options: [['required', 'depend'], ['optional', 'softdepend']] },
+    ],
+    colour: C.events,
+    tooltip: 'Adds the plugin to depend/softdepend in plugin.yml so it loads before yours',
+  },
 
   // ---------------- PLAYER ----------------
   val('player_current', 'player', [], C.player, 'Player', 'The player of the current event / command'),

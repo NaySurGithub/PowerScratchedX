@@ -24,6 +24,11 @@ export const toolbox = {
         block('evt_set_broadcast', { TEXT: shadowText('') }),
         block('evt_block_id'), block('evt_block_coord'), block('evt_item_id'),
         block('evt_damage'), block('evt_set_damage', { VALUE: shadowNum(1) }),
+        { kind: 'sep' },
+        block('evt_custom'),
+        block('evt_field', { FIELD: shadowText('violations') }),
+        block('evt_set_field', { FIELD: shadowText('cancelled'), VALUE: shadowText('true') }),
+        block('plugin_depend'),
       ],
     },
     {

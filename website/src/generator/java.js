@@ -16,6 +16,8 @@ function resetContext() {
     handlers: [],
     commands: [],
     permissions: [],
+    depends: [],
+    customEvents: [],
     configDefaults: [],
     enableBody: [],
     disableBody: [],
@@ -100,6 +102,22 @@ for (const [type, info] of Object.entries(EVENT_HATS)) {
     return '';
   };
 }
+
+G.evt_custom = function (block) {
+  const cls = String(block.getFieldValue('CLASS') || '').trim().replace(/[^A-Za-z0-9_.$]/g, '');
+  if (!cls || !cls.includes('.')) return '';
+  const n = nextId();
+  method(`h${n}`, statements(block, 'DO'));
+  javaGenerator.ctx.customEvents.push(`registerCustomEvent(${jstr(cls)}, this::h${n});`);
+  return '';
+};
+G.evt_field = (b) => [`packetGet(c.event, ${str(b, 'FIELD')})`, ORDER];
+G.evt_set_field = (b) => `packetSet(c.event, ${str(b, 'FIELD')}, ${v(b, 'VALUE')});\n`;
+G.plugin_depend = function (block) {
+  const name = String(block.getFieldValue('NAME') || '').trim();
+  if (name) javaGenerator.ctx.depends.push({ name, kind: block.getFieldValue('KIND') });
+  return '';
+};
 
 G.evt_enable = function (block) {
   javaGenerator.ctx.enableBody.push(statements(block, 'DO'));
@@ -816,7 +834,7 @@ export function buildProject(workspace, meta) {
   const commands = ctx.commands.filter((c) => (seen.has(c.name) ? false : seen.add(c.name)));
 
   const files = {};
-  files['plugin.yml'] = pluginYml({ ...meta, name, main }, commands, ctx.permissions);
+  files['plugin.yml'] = pluginYml({ ...meta, name, main }, commands, ctx.permissions, ctx.depends);
   if (ctx.configDefaults.length) {
     files['config.yml'] = ctx.configDefaults.map((d) => `${d.key}: ${yamlValue(d.value)}`).join('\n') + '\n';
   }
@@ -838,7 +856,7 @@ export function buildProject(workspace, meta) {
   return { name, version: meta.version || '1.0.0', main, files, java: files['src/' + pkg.replace(/\./g, '/') + '/Main.java'], resourcePack };
 }
 
-function pluginYml(meta, commands, permissions) {
+function pluginYml(meta, commands, permissions, depends = []) {
   const lines = [
     `name: ${yamlStr(meta.name)}`,
     `main: ${meta.main}`,
@@ -847,6 +865,10 @@ function pluginYml(meta, commands, permissions) {
     `author: ${yamlStr(meta.author || 'PowerScratchedX')}`,
     `description: ${yamlStr(meta.description || '')}`,
   ];
+  for (const kind of ['depend', 'softdepend']) {
+    const names = [...new Set(depends.filter((d) => d.kind === kind).map((d) => d.name))];
+    if (names.length) lines.push(`${kind}: [${names.map(yamlStr).join(', ')}]`);
+  }
   if (commands.length) {
     lines.push('commands:');
     for (const c of commands) {
@@ -878,6 +900,7 @@ function mainJava(pkg, meta, ctx, commands) {
   enableParts.push('loadData();');
   if (ctx.configDefaults.length) enableParts.push('saveDefaultConfig();');
   if (ctx.handlers.length) enableParts.push('getServer().getPluginManager().registerEvents(this, this);');
+  enableParts.push(...ctx.customEvents);
   enableParts.push(...ctx.repeating);
   const enableBody = ctx.enableBody.join('');
   const disableBody = ctx.disableBody.join('');
@@ -1254,6 +1277,46 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
         } catch (Exception e) {
             return 0;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void registerCustomEvent(String className, java.util.function.Consumer<Ctx> handler) {
+        try {
+            Class<?> type = Class.forName(className, false, getPluginClassLoader());
+            if (!org.powernukkitx.event.Event.class.isAssignableFrom(type)) {
+                getLogger().warning(className + " is not an event class");
+                return;
+            }
+            getServer().getPluginManager().registerEvent(
+                    (Class<? extends org.powernukkitx.event.Event>) type,
+                    this,
+                    org.powernukkitx.event.EventPriority.NORMAL,
+                    (listener, event) -> {
+                        Ctx c = new Ctx();
+                        c.event = event;
+                        c.player = eventPlayer(event);
+                        handler.accept(c);
+                    },
+                    this);
+        } catch (ClassNotFoundException e) {
+            getLogger().warning("Custom event not found: " + className + " (is the other plugin installed?)");
+        } catch (Exception e) {
+            getLogger().warning("Could not listen to " + className + ": " + e.getMessage());
+        }
+    }
+
+    private static Player eventPlayer(Object event) {
+        if (event == null) return null;
+        for (String name : new String[] { "getPlayer", "getEntity", "getDamager", "player" }) {
+            try {
+                java.lang.reflect.Method m = event.getClass().getMethod(name);
+                Object result = m.invoke(event);
+                if (result instanceof Player p) return p;
+            } catch (ReflectiveOperationException ignored) {
+                // try the next accessor
+            }
+        }
+        return null;
     }
 
     private static boolean packetIs(Object packet, String type) {
