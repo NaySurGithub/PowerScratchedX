@@ -448,6 +448,32 @@ const customDefs = [
   stmt('pdata_set_name', 'set data %2 of player named %1 to %3', [T('NAME'), T('KEY'), T('VALUE')], C.pdata, 'Works even if the player is offline'),
   val('pdata_get_name', 'data %2 of player named %1', [T('NAME'), T('KEY')], C.pdata, null, 'Works even if the player is offline'),
 
+  // ---------------- WEB ----------------
+  {
+    type: 'http_request',
+    message0: '%1 request to %2',
+    args0: [
+      { type: 'field_dropdown', name: 'METHOD', options: [['GET', 'GET'], ['POST', 'POST'], ['PUT', 'PUT'], ['DELETE', 'DELETE'], ['PATCH', 'PATCH']] },
+      T('URL'),
+    ],
+    message1: 'body %1 headers %2',
+    args1: [T('BODY'), T('HEADERS')],
+    message2: 'when the response arrives %1',
+    args2: [{ type: 'input_statement', name: 'DO' }],
+    colour: C.web,
+    previousStatement: null,
+    nextStatement: null,
+    tooltip: 'Sends the request in the background (the server never freezes). Headers: one per line, "Name: value". A JSON body gets Content-Type: application/json automatically.',
+  },
+  val('http_status', 'response status', [], C.web, 'Number', '200 = OK, 0 = request failed'),
+  val('http_body', 'response body', [], C.web, 'String'),
+  val('http_ok', 'response is OK', [], C.web, 'Boolean', 'Status between 200 and 299'),
+  val('json_get', 'json %1 of %2', [T('PATH'), T('TEXT')], C.web, null, 'Path like data.name or items.0.id (empty = whole value). Returns text, number, true/false or the JSON of an object'),
+  val('json_length', 'json length of %1', [T('TEXT')], C.web, 'Number', 'Number of items of a JSON array or keys of an object'),
+  val('json_quote', 'json text %1', [T('TEXT')], C.web, 'String', 'Escapes text for use inside a JSON body (adds quotes)'),
+  val('url_encode', 'url encode %1', [T('TEXT')], C.web, 'String'),
+  stmt('discord_webhook', 'send %2 to Discord webhook %1', [T('URL'), T('TEXT')], C.web, 'Posts a message to a Discord webhook URL'),
+
   val('form_button_text', 'clicked button text', [], C.forms, 'String'),
   val('form_button_index', 'clicked button number', [], C.forms, 'Number', '1 for the first button'),
   val('form_value', 'form value # %1', [T('INDEX')], C.forms, null, 'Value of the nth element (1-based): text for inputs/dropdowns/step sliders, number for sliders, true/false for toggles'),

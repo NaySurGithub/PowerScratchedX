@@ -31,6 +31,8 @@ export const toolbox = {
       contents: [
         block('player_current'),
         block('player_by_name', { NAME: shadowText('Steve') }),
+        { kind: 'block', type: 'player_is_online', inputs: { PLAYER: { shadow: { type: 'player_by_name', inputs: { NAME: shadowText('Steve') } } } } },
+        { kind: 'sep' },
         withPlayer('player_send_message', { TEXT: shadowText('Hello!') }),
         withPlayer('player_send_title', { TITLE: shadowText('Title'), SUB: shadowText('') }),
         withPlayer('player_send_bar', { TEXT: shadowText('Hello!') }),
@@ -166,6 +168,20 @@ export const toolbox = {
         { kind: 'sep' },
         block('form_button_text'), block('form_button_index'),
         block('form_value', { INDEX: shadowNum(1) }), block('form_value_index', { INDEX: shadowNum(1) }),
+      ],
+    },
+    {
+      kind: 'category', name: 'Web', colour: C.web,
+      contents: [
+        block('http_request', { URL: shadowText('https://api.example.com/data'), BODY: shadowText(''), HEADERS: shadowText('') }),
+        block('http_status'), block('http_body'), block('http_ok'),
+        { kind: 'sep' },
+        block('json_get', { PATH: shadowText('data.name'), TEXT: shadowText('') }),
+        block('json_length', { TEXT: shadowText('') }),
+        block('json_quote', { TEXT: shadowText('hello') }),
+        block('url_encode', { TEXT: shadowText('hello world') }),
+        { kind: 'sep' },
+        block('discord_webhook', { URL: shadowText('https://discord.com/api/webhooks/...'), TEXT: shadowText('Hello from the server!') }),
       ],
     },
     {

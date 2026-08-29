@@ -26,6 +26,7 @@ Build [PowerNukkitX](https://github.com/PowerNukkitX/PowerNukkitX) plugins with 
 - Time: repeating tasks (`every N ticks`) and delayed tasks (`wait N ticks then`).
 - Control & operators: if/else, repeat, while/until, math, comparison, logic, text, Minecraft color codes, variables.
 - Lists (named, persistent) and per-player data (key/value, kept across reconnects and restarts).
+- Web: background HTTP requests (GET/POST/PUT/DELETE/PATCH with body and headers) with a response script, JSON reading by path, URL encoding and a Discord webhook shortcut.
 - Plugin metadata (name, version, author, description) in the top bar; projects autosave in the browser and can be exported/imported as `.psx.json`.
 - "Java" panel shows the generated source live; build errors are reported with line numbers.
 

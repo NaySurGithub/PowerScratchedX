@@ -14,4 +14,5 @@ export const C = {
   forms: '#C2185B',
   lists: '#FF661A',
   pdata: '#0097A7',
+  web: '#00897B',
 };

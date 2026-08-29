@@ -584,6 +584,21 @@ G.pdata_has = (b) => pv(b, (q) => `dataHas(${q}.getName(), ${str(b, 'KEY')})`, '
 G.pdata_set_name = (b) => `dataSet(${str(b, 'NAME')}, ${str(b, 'KEY')}, ${v(b, 'VALUE')});\n`;
 G.pdata_get_name = (b) => [`dataGet(${str(b, 'NAME')}, ${str(b, 'KEY')})`, ORDER];
 
+G.http_request = (b) => {
+  const body = statements(b, 'DO');
+  const m = body.trim() ? hoist(body) : null;
+  const callback = m ? `(status, text) -> { Ctx c3 = c2.copy(); c3.httpStatus = status; c3.httpBody = text; ${m}(c3); }` : '(status, text) -> { }';
+  return `{ Ctx c2 = c.copy(); httpRequest(${jstr(b.getFieldValue('METHOD'))}, ${str(b, 'URL')}, ${str(b, 'BODY')}, ${str(b, 'HEADERS')}, ${callback}); }\n`;
+};
+G.http_status = () => ['((double) c.httpStatus)', ORDER];
+G.http_body = () => ['(c.httpBody)', ORDER];
+G.http_ok = () => ['(c.httpStatus >= 200 && c.httpStatus < 300)', ORDER];
+G.json_get = (b) => [`jsonGet(${str(b, 'TEXT')}, ${str(b, 'PATH')})`, ORDER];
+G.json_length = (b) => [`jsonLength(${str(b, 'TEXT')})`, ORDER];
+G.json_quote = (b) => [`GSON.toJson(${str(b, 'TEXT')})`, ORDER];
+G.url_encode = (b) => [`java.net.URLEncoder.encode(${str(b, 'TEXT')}, java.nio.charset.StandardCharsets.UTF_8)`, ORDER];
+G.discord_webhook = (b) => `httpRequest("POST", ${str(b, 'URL')}, "{\\"content\\":" + GSON.toJson(${str(b, 'TEXT')}) + "}", "", (status, text) -> { });\n`;
+
 G.form_button_text = () => ['(c.formText)', ORDER];
 G.form_button_index = () => ['((double) (c.formButton + 1))', ORDER];
 G.form_value = (b) => [`formValue(c.formResponse, (int) ${num(b, 'INDEX', '1')})`, ORDER];
@@ -967,6 +982,8 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
         String formText = "";
         Object formResponse;
         Object listItem;
+        int httpStatus;
+        String httpBody = "";
 
         Ctx copy() {
             Ctx n = new Ctx();
@@ -984,8 +1001,90 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
             n.formText = formText;
             n.formResponse = formResponse;
             n.listItem = listItem;
+            n.httpStatus = httpStatus;
+            n.httpBody = httpBody;
             return n;
         }
+    }
+
+    private static final java.net.http.HttpClient HTTP = java.net.http.HttpClient.newBuilder()
+            .followRedirects(java.net.http.HttpClient.Redirect.NORMAL)
+            .connectTimeout(java.time.Duration.ofSeconds(10))
+            .build();
+
+    private void httpRequest(String method, String url, String body, String headers, java.util.function.BiConsumer<Integer, String> callback) {
+        try {
+            java.net.http.HttpRequest.Builder builder = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url.trim()))
+                    .timeout(java.time.Duration.ofSeconds(20))
+                    .header("User-Agent", "PowerScratchedX/" + getDescription().getVersion());
+            boolean hasContentType = false;
+            for (String line : headers.split("\\r?\\n")) {
+                int colon = line.indexOf(':');
+                if (colon > 0) {
+                    String name = line.substring(0, colon).trim();
+                    builder.header(name, line.substring(colon + 1).trim());
+                    if (name.equalsIgnoreCase("Content-Type")) hasContentType = true;
+                }
+            }
+            String trimmed = body == null ? "" : body.trim();
+            if (!hasContentType && (trimmed.startsWith("{") || trimmed.startsWith("["))) {
+                builder.header("Content-Type", "application/json");
+            }
+            java.net.http.HttpRequest.BodyPublisher publisher = trimmed.isEmpty()
+                    ? java.net.http.HttpRequest.BodyPublishers.noBody()
+                    : java.net.http.HttpRequest.BodyPublishers.ofString(body, java.nio.charset.StandardCharsets.UTF_8);
+            java.net.http.HttpRequest request = builder.method(method, publisher).build();
+            HTTP.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8))
+                    .whenComplete((response, error) -> {
+                        int status = error == null ? response.statusCode() : 0;
+                        String text = error == null ? response.body() : String.valueOf(error.getMessage());
+                        getServer().getScheduler().scheduleTask(this, () -> callback.accept(status, text));
+                    });
+        } catch (Exception e) {
+            getLogger().warning("HTTP request failed: " + e.getMessage());
+            callback.accept(0, String.valueOf(e.getMessage()));
+        }
+    }
+
+    private static com.google.gson.JsonElement jsonNavigate(String text, String path) {
+        try {
+            com.google.gson.JsonElement element = com.google.gson.JsonParser.parseString(text);
+            for (String part : str(path).split("\\\\.")) {
+                if (part.isEmpty() || element == null) continue;
+                if (element.isJsonArray()) {
+                    int index = (int) num(part);
+                    com.google.gson.JsonArray array = element.getAsJsonArray();
+                    element = index >= 0 && index < array.size() ? array.get(index) : null;
+                } else if (element.isJsonObject()) {
+                    element = element.getAsJsonObject().get(part);
+                } else {
+                    return null;
+                }
+            }
+            return element;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static Object jsonGet(String text, String path) {
+        com.google.gson.JsonElement element = jsonNavigate(text, path);
+        if (element == null || element.isJsonNull()) return "";
+        if (element.isJsonPrimitive()) {
+            com.google.gson.JsonPrimitive primitive = element.getAsJsonPrimitive();
+            if (primitive.isNumber()) return primitive.getAsDouble();
+            if (primitive.isBoolean()) return primitive.getAsBoolean();
+            return primitive.getAsString();
+        }
+        return element.toString();
+    }
+
+    private static double jsonLength(String text) {
+        com.google.gson.JsonElement element = jsonNavigate(text, "");
+        if (element == null) return 0;
+        if (element.isJsonArray()) return element.getAsJsonArray().size();
+        if (element.isJsonObject()) return element.getAsJsonObject().size();
+        return 0;
     }
 
     private final Map<String, List<Object>> lists = new java.util.LinkedHashMap<>();

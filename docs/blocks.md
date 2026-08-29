@@ -68,6 +68,11 @@ Bedrock UI forms, with the response scripts directly inside the block:
 
 Inside the response scripts, `player` is the player who answered, and everything from the surrounding context (command sender, arguments, event) is still available.
 
+### Web
+- `GET/POST/PUT/DELETE/PATCH request to <url>` with `body` and `headers` (one `Name: value` per line) and a nested `when the response arrives` script. The request runs in the background and the script runs back on the main thread with `response status` (0 if the request failed), `response body` and `response is OK`. A body starting with `{` or `[` is sent as `application/json`.
+- `json <path> of <text>`: reads a value from JSON with a dotted path (`data.name`, `items.0.id`; empty path = whole value). `json length of` counts array items or object keys. `json text` escapes text for a JSON body. `url encode` escapes text for a URL.
+- `send <text> to Discord webhook <url>` posts a message to a Discord webhook.
+
 ### Config
 `config: key defaults to value` (writes `config.yml`, saved on first run), `config key`, `set config key to`, `config has key`, `reload config`.
 
