@@ -105,6 +105,11 @@ const defs = [
   val('player_world', 'world of %1', [PLAYER], C.player, 'String'),
   val('player_gamemode', 'gamemode of %1', [PLAYER], C.player, 'Number', '0 survival, 1 creative, 2 adventure, 3 spectator'),
   val('player_item_in_hand', 'item in hand of %1', [PLAYER], C.player, 'String'),
+  val('player_item_in_offhand', 'item in offhand of %1', [PLAYER], C.player, 'String', 'Empty text if the offhand is empty'),
+  stmt('player_swap_offhand', 'swap main hand and offhand of %1', [PLAYER], C.player, 'Exchanges the two item stacks'),
+  stmt('player_set_hand_item', 'set %2 hand item of %1 to %3', [
+    PLAYER, { type: 'field_dropdown', name: 'SLOT', options: [['main', 'MAIN'], ['off', 'OFF']] }, T('ITEM'),
+  ], C.player, 'Item id (empty = clear the slot)'),
   val('player_has_permission', '%1 has permission %2', [PLAYER, T('PERM')], C.player, 'Boolean'),
   val('player_is_op', '%1 is operator', [PLAYER], C.player, 'Boolean'),
   val('player_is_online', '%1 is online', [PLAYER], C.player, 'Boolean'),

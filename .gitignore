@@ -11,6 +11,7 @@ website/.env.local
 backend/.gradle/
 backend/build/
 backend/work/
+backend/builds.count
 backend/lib/*.jar
 *.class
 

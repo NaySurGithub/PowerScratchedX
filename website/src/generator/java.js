@@ -170,6 +170,12 @@ G.player_coord = (b) => pv(b, (q) => `${q}.get${b.getFieldValue('AXIS')}()`, '0.
 G.player_world = (b) => pv(b, (q) => `${q}.getLevel().getName()`, '""');
 G.player_gamemode = (b) => pv(b, (q) => `(double) ${q}.getGamemode()`, '0.0');
 G.player_item_in_hand = (b) => pv(b, (q) => `${q}.getInventory().getItemInMainHand().getId()`, '""');
+G.player_item_in_offhand = (b) => pv(b, (q) => `itemId(${q}.getInventory().getItemInOffhand())`, '""');
+G.player_swap_offhand = (b) => withPlayer(b, 'Item main = p.getInventory().getItemInMainHand().clone(); Item off = p.getInventory().getItemInOffhand().clone(); p.getInventory().setItemInHand(off); p.getInventory().setItemInOffhand(main);');
+G.player_set_hand_item = (b) => {
+  const setter = b.getFieldValue('SLOT') === 'OFF' ? 'setItemInOffhand' : 'setItemInHand';
+  return withPlayer(b, `Item it = item(${str(b, 'ITEM')}, 1); p.getInventory().${setter}(it == null ? Item.AIR : it);`);
+};
 G.player_has_permission = (b) => pv(b, (q) => `${q}.hasPermission(${str(b, 'PERM')})`, 'false');
 G.player_is_op = (b) => pv(b, (q) => `${q}.isOp()`, 'false');
 G.player_is_online = (b) => [`(${player(b)} != null)`, ORDER];
@@ -1333,6 +1339,10 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
         if (id == null || id.isEmpty()) return "";
         if (id.contains(":")) return id;
         return CUSTOM_IDS.contains(NS + ":" + id) ? NS + ":" + id : "minecraft:" + id;
+    }
+
+    private static String itemId(Item item) {
+        return item == null || item.isNull() ? "" : item.getId();
     }
 
     private static boolean itemIs(Item item, String wanted) {

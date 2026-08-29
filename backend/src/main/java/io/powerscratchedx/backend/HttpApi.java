@@ -27,12 +27,14 @@ public final class HttpApi {
 
     private final AppConfig config;
     private final BuildService builds;
+    private final BuildStats stats;
     private final Map<String, Deque<Long>> rateLimit = new ConcurrentHashMap<>();
     private HttpServer server;
 
-    public HttpApi(AppConfig config, BuildService builds) {
+    public HttpApi(AppConfig config, BuildService builds, BuildStats stats) {
         this.config = config;
         this.builds = builds;
+        this.stats = stats;
     }
 
     public void start() throws IOException {
@@ -58,6 +60,7 @@ public final class HttpApi {
         body.put("ok", builds.isReady());
         body.put("pnxJar", config.pnxJar().getFileName().toString());
         body.put("javaVersion", Runtime.version().toString());
+        body.put("builds", stats.count());
         json(ex, 200, body);
     }
 
@@ -94,7 +97,8 @@ public final class HttpApi {
             try (OutputStream out = ex.getResponseBody()) {
                 out.write(artifact.bytes());
             }
-            Main.LOG.info("Built " + artifact.fileName() + " (" + artifact.bytes().length + " bytes) for " + clientIp(ex));
+            long total = stats.increment();
+            Main.LOG.info("Built " + artifact.fileName() + " (" + artifact.bytes().length + " bytes) for " + clientIp(ex) + " - total builds: " + total);
         } catch (BuildException e) {
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("ok", false);

@@ -25,7 +25,7 @@ Blocks that need a value the context does not have fall back to a neutral defaul
 ### Player
 Actions: `send`, `show title`, `show action bar/popup/tip`, `teleport to x y z / to player / to spawn`, `give item`, `clear inventory`, `kick`, `set gamemode`, `set health`, `set food`, `give effect`, `clear effects`, `set on fire`, `give xp`, `make run command`, `make/remove operator`, `play sound`, `set display name`.
 
-Reporters: `player`, `player named`, `name`, `health`, `food`, `x/y/z`, `world`, `gamemode`, `item in hand`, `has permission`, `is operator`, `is online`, `is sneaking`.
+Reporters: `player`, `player named`, `name`, `health`, `food`, `x/y/z`, `world`, `gamemode`, `item in hand`, `item in offhand`, `has permission`, `is operator`, `is online`, `is sneaking`. Hands: `swap main hand and offhand`, `set main/off hand item to`.
 
 ### Server
 `broadcast`, `run console command`, `log to console`, `for each online player`, `online player count/names`, `set block`, `block id at`, `set world time`, `play sound at`, `current world name`.

@@ -13,7 +13,8 @@ public final class Main {
     public static void main(String[] args) throws IOException {
         AppConfig config = AppConfig.fromEnvAndArgs(args);
         BuildService builds = new BuildService(config);
-        HttpApi api = new HttpApi(config, builds);
+        BuildStats stats = new BuildStats(config.workDir().resolveSibling("builds.count"));
+        HttpApi api = new HttpApi(config, builds, stats);
 
         if (!builds.isReady()) {
             LOG.warning("PowerNukkitX jar not found at " + config.pnxJar() + " - builds will fail until it is provided (PNX_JAR or --pnx-jar)");

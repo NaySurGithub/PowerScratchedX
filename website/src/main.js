@@ -392,6 +392,7 @@ $('btn-build').addEventListener('click', async () => {
       downloadBlob(result.blob, result.filename);
       buildModal.success(result.filename, result.blob, pack);
       setStatus(`Built ${result.filename}`, 'ok');
+      checkBackend();
     } else {
       const errors = result.errors || [{ message: result.error || 'Build failed' }];
       buildModal.fail(result.error || 'Build failed', errors);
@@ -411,6 +412,10 @@ async function checkBackend() {
     const h = await api.health();
     $('backend').textContent = h.ok ? `Backend online · ${h.pnxJar || 'PNX'}` : 'Backend not ready';
     $('backend').className = 'backend ' + (h.ok ? 'ok' : 'error');
+    if (typeof h.builds === 'number') {
+      const n = h.builds;
+      $('counter').textContent = `${n.toLocaleString('en-US')} plugin${n === 1 ? '' : 's'} built`;
+    }
   } catch {
     $('backend').textContent = 'Backend offline';
     $('backend').className = 'backend error';

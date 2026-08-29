@@ -467,6 +467,16 @@ body.code-open .code-panel {
   flex: 1;
 }
 
+.counter {
+  font-weight: 600;
+  color: var(--blue-dark);
+  white-space: nowrap;
+}
+
+.counter:empty {
+  display: none;
+}
+
 .disclaimer {
   color: #9aa3b5;
 }
