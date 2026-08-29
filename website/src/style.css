@@ -456,10 +456,25 @@ body.code-open .code-panel {
 }
 
 .status,
-.backend {
+.backend,
+.disclaimer {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.status {
+  flex: 1;
+}
+
+.disclaimer {
+  color: #9aa3b5;
+}
+
+@media (max-width: 760px) {
+  .disclaimer {
+    display: none;
+  }
 }
 
 .backend::before {

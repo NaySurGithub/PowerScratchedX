@@ -104,6 +104,10 @@ backend/   Gradle project (io.powerscratchedx.backend)
 docs/      Additional documentation
 ```
 
+## Disclaimer
+
+PowerScratchedX is an independent community project. It is not affiliated with, endorsed by, or maintained by the PowerNukkitX team.
+
 ## License
 
 MIT - see [LICENSE](LICENSE).
