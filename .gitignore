@@ -1,0 +1,22 @@
+# Node / Vite
+website/node_modules/
+website/dist/
+website/out/
+website/.env
+website/.env.local
+*.out
+*.log
+
+# Gradle / Java
+backend/.gradle/
+backend/build/
+backend/work/
+backend/lib/*.jar
+*.class
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
