@@ -332,11 +332,57 @@ const buildModal = {
     $('build-close').hidden = false;
   },
 
+  unchanged(filename, blob, pack) {
+    clearInterval(this.timer);
+    this.progress = 100;
+    this.target = 100;
+    this.render();
+    for (const li of $('build-steps').children) li.className = 'done';
+    this.el.className = 'modal success';
+    $('build-title').textContent = 'Nothing changed';
+    $('build-subtitle').textContent = `${filename} is already up to date, no need to build again`;
+    this.lastArtifact = { filename, blob, pack };
+    $('build-download').hidden = !blob;
+    $('build-pack').hidden = !pack;
+    $('build-pack-hint').hidden = true;
+    $('build-close').hidden = false;
+  },
+
   close() {
     clearInterval(this.timer);
     this.el.hidden = true;
   },
 };
+
+const LAST_BUILD_KEY = 'powerscratchedx.lastBuild';
+let lastBuild = null;
+
+async function projectHash(project) {
+  const parts = [project.name, project.version, project.main];
+  for (const path of Object.keys(project.files).sort()) {
+    parts.push(path, project.files[path]);
+  }
+  const data = new TextEncoder().encode(parts.join(' '));
+  if (!window.crypto || !window.crypto.subtle) return String(data.length) + ':' + parts.join('').length;
+  const digest = await window.crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function rememberBuild(hash, filename) {
+  try {
+    localStorage.setItem(LAST_BUILD_KEY, JSON.stringify({ hash, filename }));
+  } catch {
+    // storage unavailable
+  }
+}
+
+function recallBuild() {
+  try {
+    return JSON.parse(localStorage.getItem(LAST_BUILD_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
 
 $('build-close').addEventListener('click', () => buildModal.close());
 $('build-download').addEventListener('click', () => {
@@ -371,6 +417,14 @@ $('btn-build').addEventListener('click', async () => {
     setStatus('Generation failed', 'error');
     return;
   }
+  const hash = await projectHash(project);
+  const previous = lastBuild || recallBuild();
+  if (previous && previous.hash === hash) {
+    buildModal.unchanged(previous.filename, previous.blob || null, previous.pack || null);
+    setStatus('Nothing changed since the last build', 'ok');
+    btn.disabled = false;
+    return;
+  }
   buildModal.step('upload', 35);
   await wait(250);
   buildModal.step('compile', 85);
@@ -391,6 +445,9 @@ $('btn-build').addEventListener('click', async () => {
       await wait(300);
       downloadBlob(result.blob, result.filename);
       buildModal.success(result.filename, result.blob, pack);
+      if (result.cached) $('build-subtitle').textContent = `${result.filename} (unchanged, served from cache)`;
+      lastBuild = { hash, filename: result.filename, blob: result.blob, pack };
+      rememberBuild(hash, result.filename);
       setStatus(`Built ${result.filename}`, 'ok');
       checkBackend();
     } else {

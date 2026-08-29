@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 
 public final class BuildService {
 
-    public record Artifact(String fileName, byte[] bytes) { }
+    public record Artifact(String fileName, byte[] bytes, boolean cached) { }
 
     private static final Pattern NAME = Pattern.compile("^[A-Za-z0-9_.-]{1,40}$");
     private static final Pattern VERSION = Pattern.compile("^[A-Za-z0-9_.+-]{1,20}$");
@@ -36,6 +36,12 @@ public final class BuildService {
     private final AppConfig config;
     private final Semaphore slots;
     private final JavaCompiler compiler;
+    private final Map<String, Artifact> cache = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<>(64, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Artifact> eldest) {
+            return size() > 50;
+        }
+    });
 
     public BuildService(AppConfig config) {
         this.config = config;
@@ -55,6 +61,33 @@ public final class BuildService {
         if (!isReady()) {
             throw new BuildException(503, "PowerNukkitX jar not found at " + config.pnxJar());
         }
+        String key = cacheKey(req);
+        Artifact cached = cache.get(key);
+        if (cached != null) {
+            return new Artifact(cached.fileName(), cached.bytes(), true);
+        }
+        Artifact built = compileAndPackage(req);
+        cache.put(key, built);
+        return built;
+    }
+
+    private static String cacheKey(BuildRequest req) throws BuildException {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            digest.update((req.name + "\n" + req.version + "\n" + req.main + "\n").getBytes(StandardCharsets.UTF_8));
+            for (String path : new java.util.TreeSet<>(req.files.keySet())) {
+                digest.update(path.getBytes(StandardCharsets.UTF_8));
+                digest.update((byte) 0);
+                digest.update(req.files.get(path).getBytes(StandardCharsets.UTF_8));
+                digest.update((byte) 0);
+            }
+            return java.util.HexFormat.of().formatHex(digest.digest());
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new BuildException(500, "Hashing unavailable");
+        }
+    }
+
+    private Artifact compileAndPackage(BuildRequest req) throws BuildException {
         if (!slots.tryAcquire()) {
             throw new BuildException(429, "Build server busy, try again in a moment");
         }
@@ -86,7 +119,7 @@ public final class BuildService {
 
             compile(src, classes, javaFiles);
             byte[] jar = jar(classes, resources);
-            return new Artifact(req.name + "-" + req.version + ".jar", jar);
+            return new Artifact(req.name + "-" + req.version + ".jar", jar, false);
         } catch (IOException e) {
             throw new BuildException(500, "I/O error: " + e.getMessage());
         } finally {

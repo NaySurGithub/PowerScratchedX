@@ -92,13 +92,18 @@ public final class HttpApi {
             BuildService.Artifact artifact = builds.build(req);
             ex.getResponseHeaders().set("Content-Type", "application/java-archive");
             ex.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"" + artifact.fileName() + "\"");
+            ex.getResponseHeaders().set("X-Build-Cached", String.valueOf(artifact.cached()));
             cors(ex);
             ex.sendResponseHeaders(200, artifact.bytes().length);
             try (OutputStream out = ex.getResponseBody()) {
                 out.write(artifact.bytes());
             }
-            long total = stats.increment();
-            Main.LOG.info("Built " + artifact.fileName() + " (" + artifact.bytes().length + " bytes) for " + clientIp(ex) + " - total builds: " + total);
+            if (artifact.cached()) {
+                Main.LOG.info("Served cached " + artifact.fileName() + " for " + clientIp(ex));
+            } else {
+                long total = stats.increment();
+                Main.LOG.info("Built " + artifact.fileName() + " (" + artifact.bytes().length + " bytes) for " + clientIp(ex) + " - total builds: " + total);
+            }
         } catch (BuildException e) {
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("ok", false);
@@ -188,7 +193,7 @@ public final class HttpApi {
         ex.getResponseHeaders().set("Access-Control-Allow-Origin", config.allowedOrigin());
         ex.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         ex.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
-        ex.getResponseHeaders().set("Access-Control-Expose-Headers", "Content-Disposition");
+        ex.getResponseHeaders().set("Access-Control-Expose-Headers", "Content-Disposition, X-Build-Cached");
     }
 
     private void json(HttpExchange ex, int status, Object body) throws IOException {

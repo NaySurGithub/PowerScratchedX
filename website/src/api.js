@@ -16,7 +16,8 @@ export async function build(project) {
     const blob = await res.blob();
     const disposition = res.headers.get('Content-Disposition') || '';
     const match = /filename="?([^";]+)"?/.exec(disposition);
-    return { ok: true, blob, filename: match ? match[1] : `${project.name}.jar` };
+    const cached = res.headers.get('X-Build-Cached') === 'true';
+    return { ok: true, blob, filename: match ? match[1] : `${project.name}.jar`, cached };
   }
   let body;
   try {
