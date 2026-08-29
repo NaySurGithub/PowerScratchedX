@@ -2,6 +2,12 @@
 
 Build [PowerNukkitX](https://github.com/PowerNukkitX/PowerNukkitX) plugins with Scratch-style blocks, straight from the browser, and download a ready-to-use `.jar`.
 
+<p align="center">
+  <a href="https://naysurgithub.github.io/">
+    <img src="https://img.shields.io/badge/%E2%96%B6%20TRY%20IT-naysurgithub.github.io-4c97ff?style=for-the-badge&labelColor=ff8c1a" alt="Try it" height="48">
+  </a>
+</p>
+
 - **Website** (`website/`): Vite + [Blockly](https://developers.google.com/blockly) editor with a Scratch-like toolbox (events, player, server, commands, config, control, time, operators, variables). The editor turns blocks into real Java source in your browser.
 - **Backend** (`backend/`): a small Java 21 HTTP server that compiles the generated source against the PowerNukkitX jar (in-process `javac`) and returns the plugin jar.
 
