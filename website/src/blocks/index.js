@@ -100,6 +100,10 @@ const defs = [
   stmt('player_teleport_to', 'teleport %1 to %2', [PLAYER, { type: 'input_value', name: 'TARGET', check: 'Player' }], C.player),
   stmt('player_teleport_spawn', 'teleport %1 to spawn', [PLAYER], C.player),
   stmt('player_give_item', 'give %3 × %2 to %1', [PLAYER, T('ITEM'), T('COUNT')], C.player, 'Item id, e.g. minecraft:diamond'),
+  stmt('player_give_named_item', 'give %3 × %2 to %1 named %4 lore %5', [PLAYER, T('ITEM'), T('COUNT'), T('NAME'), T('LORE')], C.player, 'Custom display name and lore. Separate lore lines with |. Leave empty to keep the default.'),
+  stmt('player_set_invisible', 'set %1 %2', [
+    PLAYER, { type: 'field_dropdown', name: 'MODE', options: [['invisible (vanish)', 'true'], ['visible', 'false']] },
+  ], C.player, 'Hides the player from everyone else (model and player list) or shows them again'),
   stmt('player_clear_inventory', 'clear inventory of %1', [PLAYER], C.player),
   stmt('player_kick', 'kick %1 reason %2', [PLAYER, T('REASON')], C.player),
   stmt('player_set_gamemode', 'set gamemode of %1 to %2', [
@@ -169,6 +173,7 @@ const defs = [
     tooltip: 'Creates a command. Leave permission empty to let everyone use it.',
   },
   stmt('cmd_reply', 'reply %1 to sender', [T('TEXT')], C.commands),
+  stmt('cmd_unregister', 'unregister command %1', [T('NAME')], C.commands, 'Removes a command from the server (yours, another plugin\'s or a built-in one). Usually placed in "when plugin starts".'),
   val('cmd_sender_name', 'sender name', [], C.commands, 'String'),
   val('cmd_sender_is_player', 'sender is a player', [], C.commands, 'Boolean'),
   val('cmd_arg', 'argument # %1', [T('INDEX')], C.commands, 'String', 'Starts at 1. Empty if missing.'),

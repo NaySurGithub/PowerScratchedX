@@ -45,6 +45,8 @@ export const toolbox = {
         withPlayer('player_teleport_to', { TARGET: { shadow: { type: 'player_by_name', inputs: { NAME: shadowText('Steve') } } } }),
         withPlayer('player_teleport_spawn'),
         withPlayer('player_give_item', { ITEM: shadowText('minecraft:diamond'), COUNT: shadowNum(1) }),
+        withPlayer('player_give_named_item', { ITEM: shadowText('minecraft:blaze_rod'), COUNT: shadowNum(1), NAME: shadowText('§cFreeze Wand'), LORE: shadowText('§7Hit a player to freeze them|§7Staff only') }),
+        withPlayer('player_set_invisible'),
         withPlayer('player_clear_inventory'),
         withPlayer('player_kick', { REASON: shadowText('Kicked') }),
         withPlayer('player_set_gamemode'),
@@ -89,6 +91,7 @@ export const toolbox = {
       contents: [
         block('cmd_hat'),
         block('cmd_reply', { TEXT: shadowText('Done!') }),
+        block('cmd_unregister', { NAME: shadowText('gamemode') }),
         block('cmd_sender_name'), block('cmd_sender_is_player'),
         block('cmd_arg', { INDEX: shadowNum(1) }), block('cmd_arg_count'), block('cmd_args_joined'),
         { kind: 'sep' },

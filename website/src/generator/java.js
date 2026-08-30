@@ -162,6 +162,8 @@ G.player_teleport = (b) => withPlayer(b, `p.teleport(new org.powernukkitx.math.V
 G.player_teleport_to = (b) => withPlayer(b, `Player t = P(${v(b, 'TARGET', 'null')}); if (t != null) p.teleport(t.getLocation());`);
 G.player_teleport_spawn = (b) => withPlayer(b, 'p.teleport(getServer().getDefaultLevel().getSafeSpawn());');
 G.player_give_item = (b) => withPlayer(b, `Item it = item(${str(b, 'ITEM')}, (int) ${num(b, 'COUNT', '1')}); if (it != null) p.giveItem(it);`);
+G.player_give_named_item = (b) => withPlayer(b, `Item it = item(${str(b, 'ITEM')}, (int) ${num(b, 'COUNT', '1')}); if (it != null) { String name = ${str(b, 'NAME')}; if (!name.isEmpty()) it.setCustomName(name); String lore = ${str(b, 'LORE')}; if (!lore.isEmpty()) it.setLore(lore.split("\\\\|")); p.giveItem(it); }`);
+G.player_set_invisible = (b) => withPlayer(b, `setInvisible(p, ${b.getFieldValue('MODE')});`);
 G.player_clear_inventory = (b) => withPlayer(b, 'p.getInventory().clearAll();');
 G.player_kick = (b) => withPlayer(b, `p.kick(${str(b, 'REASON')});`);
 G.player_set_gamemode = (b) => withPlayer(b, `p.setGamemode(${b.getFieldValue('MODE')});`);
@@ -230,6 +232,7 @@ G.cmd_hat = function (block) {
   return '';
 };
 G.cmd_reply = (b) => `if (c.sender != null) c.sender.sendMessage(${str(b, 'TEXT')});\n`;
+G.cmd_unregister = (b) => `getServer().getCommandMap().unregister(${str(b, 'NAME')}.trim().toLowerCase());\n`;
 G.cmd_sender_name = () => ['(c.sender == null ? "" : c.sender.getName())', ORDER];
 G.cmd_sender_is_player = () => ['(c.sender instanceof Player)', ORDER];
 G.cmd_arg = (b) => [`arg(c, (int) ${num(b, 'INDEX', '1')})`, ORDER];
@@ -1402,6 +1405,18 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
         if (id == null || id.isEmpty()) return "";
         if (id.contains(":")) return id;
         return CUSTOM_IDS.contains(NS + ":" + id) ? NS + ":" + id : "minecraft:" + id;
+    }
+
+    private void setInvisible(Player target, boolean invisible) {
+        target.setDataFlag(org.cloudburstmc.protocol.bedrock.data.actor.ActorFlags.INVISIBLE, invisible);
+        for (Player other : players()) {
+            if (other == target) continue;
+            if (invisible) {
+                other.hidePlayer(target);
+            } else {
+                other.showPlayer(target);
+            }
+        }
     }
 
     private static String itemId(Item item) {

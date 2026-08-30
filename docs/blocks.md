@@ -28,7 +28,7 @@ Blocks that need a value the context does not have fall back to a neutral defaul
 Add `needs plugin <name> required/optional` so the other plugin is listed in `depend`/`softdepend` and loads first.
 
 ### Player
-Actions: `send`, `show title`, `show action bar/popup/tip`, `teleport to x y z / to player / to spawn`, `give item`, `clear inventory`, `kick`, `set gamemode`, `set health`, `set food`, `give effect`, `clear effects`, `set on fire`, `give xp`, `make run command`, `make/remove operator`, `play sound`, `set display name`.
+Actions: `send`, `show title`, `show action bar/popup/tip`, `teleport to x y z / to player / to spawn`, `give item`, `give item named … lore …` (lore lines separated by `|`), `set invisible (vanish) / visible`, `clear inventory`, `kick`, `set gamemode`, `set health`, `set food`, `give effect`, `clear effects`, `set on fire`, `give xp`, `make run command`, `make/remove operator`, `play sound`, `set display name`.
 
 Reporters: `player`, `player named`, `name`, `health`, `food`, `x/y/z`, `world`, `gamemode`, `item in hand`, `item in offhand`, `has permission`, `is operator`, `is online`, `is sneaking`. Hands: `swap main hand and offhand`, `set main/off hand item to`.
 
@@ -36,7 +36,7 @@ Reporters: `player`, `player named`, `name`, `health`, `food`, `x/y/z`, `world`,
 `broadcast`, `run console command`, `log to console`, `for each online player`, `online player count/names`, `set block`, `block id at`, `set world time`, `play sound at`, `current world name`.
 
 ### Commands
-`when command /name is run` (description + permission → `plugin.yml`), `reply to sender`, `sender name`, `sender is a player`, `argument #n`, `argument count`, `all arguments`, `permission ... default ...` (declares a permission in `plugin.yml`).
+`when command /name is run` (description + permission → `plugin.yml`), `reply to sender`, `unregister command <name>` (removes any command from the server, usually in `when plugin starts`), `sender name`, `sender is a player`, `argument #n`, `argument count`, `all arguments`, `permission ... default ...` (declares a permission in `plugin.yml`).
 
 ### Custom Items
 `custom item <id> named <name> · kind · tier · texture` registers a new item. Kinds: plain item, sword, pickaxe, axe, shovel, hoe, helmet, chestplate, leggings, boots, food. The tier sets default durability, attack damage and armor points (override them with properties). The full id becomes `<pluginname>:<id>`; short ids work everywhere (`give`, filters) as long as they are unique.
