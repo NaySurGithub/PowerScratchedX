@@ -30,7 +30,7 @@ Add `needs plugin <name> required/optional` so the other plugin is listed in `de
 ### Player
 Actions: `send`, `show title`, `show action bar/popup/tip`, `teleport to x y z / to player / to spawn`, `give item`, `give item named … lore …` (lore lines separated by `|`), `set invisible (vanish) / visible`, `clear inventory`, `kick`, `set gamemode`, `set health`, `set food`, `give effect`, `clear effects`, `set on fire`, `give xp`, `make run command`, `make/remove operator`, `play sound`, `set display name`.
 
-Reporters: `player`, `player named`, `name`, `health`, `food`, `x/y/z`, `world`, `gamemode`, `item in hand`, `item in offhand`, `has permission`, `is operator`, `is online`, `is sneaking`. Hands: `swap main hand and offhand`, `set main/off hand item to`.
+Reporters: `player`, `player named`, `name`, `health`, `food`, `x/y/z`, `world`, `gamemode`, `item in hand`, `item in offhand`, `has permission`, `is operator`, `is online`, `is sneaking`. Hands: `swap main hand and offhand`, `set main/off hand item to`. Slots: `set inventory slot N` (0-8 hotbar, 9-35 main), `set helmet/chestplate/leggings/boots`, `id of inventory slot N`.
 
 ### Server
 `broadcast`, `run console command`, `log to console`, `for each online player`, `online player count/names`, `set block`, `block id at`, `set world time`, `play sound at`, `current world name`.
@@ -86,6 +86,8 @@ Inside the response scripts, `player` is the player who answered, and everything
 
 ### Time
 `every N ticks` (repeating task registered on enable), `wait N ticks then` (delayed task, does not block the server), `server time (ms)`.
+
+Named tasks: `task named <name> every N ticks` (repeating, started on enable), `run task named <name> after N ticks` (one-shot delayed), `stop task named <name>`, `task named <name> is running`. Names are case-insensitive; starting or restarting a named task cancels the previous one.
 
 ### Operators
 Numbers, arithmetic, modulo, random, round, `number of`, comparisons, and/or/not, booleans, text, join, length, contains, starts with, replace, `color` (Minecraft § codes).

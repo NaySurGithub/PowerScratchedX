@@ -196,6 +196,12 @@ G.player_set_hand_item = (b) => {
   const setter = b.getFieldValue('SLOT') === 'OFF' ? 'setItemInOffhand' : 'setItemInHand';
   return withPlayer(b, `Item it = item(${str(b, 'ITEM')}, 1); p.getInventory().${setter}(it == null ? Item.AIR : it);`);
 };
+G.player_set_slot = (b) => withPlayer(b, `Item it = item(${str(b, 'ITEM')}, (int) ${num(b, 'COUNT', '1')}); p.getInventory().setItem((int) ${num(b, 'SLOT')}, it == null ? Item.AIR : it);`);
+G.player_set_armor = (b) => {
+  const setter = { HELMET: 'setHelmet', CHESTPLATE: 'setChestplate', LEGGINGS: 'setLeggings', BOOTS: 'setBoots' }[b.getFieldValue('PIECE')];
+  return withPlayer(b, `Item it = item(${str(b, 'ITEM')}, 1); p.getInventory().${setter}(it == null ? Item.AIR : it);`);
+};
+G.player_slot_item = (b) => pv(b, (q) => `itemId(${q}.getInventory().getItem((int) ${num(b, 'SLOT')}))`, '""');
 G.player_has_permission = (b) => pv(b, (q) => `${q}.hasPermission(${str(b, 'PERM')})`, 'false');
 G.player_is_op = (b) => pv(b, (q) => `${q}.isOp()`, 'false');
 G.player_is_online = (b) => [`(${player(b)} != null)`, ORDER];
@@ -283,6 +289,22 @@ G.time_wait = (b) => {
 };
 G.time_now = () => ['((double) System.currentTimeMillis())', ORDER];
 G.ctrl_stop = () => 'if (true) return;\n';
+
+G.task_named = function (block) {
+  const name = String(block.getFieldValue('NAME') || '').trim();
+  if (!name) return '';
+  const ticks = Math.max(1, parseInt(block.getFieldValue('TICKS'), 10) || 20);
+  const m = hoist(statements(block, 'DO'));
+  javaGenerator.ctx.repeating.push(`tasks.put(${jstr(name.toLowerCase())}, getServer().getScheduler().scheduleRepeatingTask(this, () -> ${m}(new Ctx()), ${ticks}));`);
+  return '';
+};
+G.task_stop = (b) => `stopTask(${str(b, 'NAME')});\n`;
+G.task_running = (b) => [`taskRunning(${str(b, 'NAME')})`, ORDER];
+G.task_delay_named = (b) => {
+  const name = String(b.getFieldValue('NAME') || '').trim().toLowerCase();
+  const m = hoist(statements(b, 'DO'));
+  return `{ Ctx c2 = c.copy(); stopTask(${jstr(name)}); tasks.put(${jstr(name)}, getServer().getScheduler().scheduleDelayedTask(this, () -> ${m}(c2), Math.max(1, (int) ${num(b, 'TICKS', '20')}))); }\n`;
+};
 
 G.controls_if = function (block) {
   let code = '';
@@ -1117,6 +1139,20 @@ ${ctx.methods.join('\n')}${items.map((i) => itemClass(i, ctx)).join('\n')}${bloc
         if (element.isJsonArray()) return element.getAsJsonArray().size();
         if (element.isJsonObject()) return element.getAsJsonObject().size();
         return 0;
+    }
+
+    private final Map<String, org.powernukkitx.scheduler.TaskHandler> tasks = new java.util.HashMap<>();
+
+    private void stopTask(String name) {
+        org.powernukkitx.scheduler.TaskHandler handler = tasks.remove(str(name).trim().toLowerCase());
+        if (handler != null) {
+            handler.cancel();
+        }
+    }
+
+    private boolean taskRunning(String name) {
+        org.powernukkitx.scheduler.TaskHandler handler = tasks.get(str(name).trim().toLowerCase());
+        return handler != null && !handler.isCancelled();
     }
 
     private final Map<String, List<Object>> lists = new java.util.LinkedHashMap<>();

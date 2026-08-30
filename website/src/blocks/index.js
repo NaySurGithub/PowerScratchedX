@@ -136,6 +136,11 @@ const defs = [
   stmt('player_set_hand_item', 'set %2 hand item of %1 to %3', [
     PLAYER, { type: 'field_dropdown', name: 'SLOT', options: [['main', 'MAIN'], ['off', 'OFF']] }, T('ITEM'),
   ], C.player, 'Item id (empty = clear the slot)'),
+  stmt('player_set_slot', 'set inventory slot %2 of %1 to %4 × %3', [PLAYER, T('SLOT'), T('ITEM'), T('COUNT')], C.player, 'Slots 0-8 = hotbar, 9-35 = main inventory. Empty item = clear the slot.'),
+  stmt('player_set_armor', 'set %2 of %1 to %3', [
+    PLAYER, { type: 'field_dropdown', name: 'PIECE', options: [['helmet', 'HELMET'], ['chestplate', 'CHESTPLATE'], ['leggings', 'LEGGINGS'], ['boots', 'BOOTS']] }, T('ITEM'),
+  ], C.player, 'Item id (empty = remove the piece)'),
+  val('player_slot_item', 'id of inventory slot %2 of %1', [PLAYER, T('SLOT')], C.player, 'String'),
   val('player_has_permission', '%1 has permission %2', [PLAYER, T('PERM')], C.player, 'Boolean'),
   val('player_is_op', '%1 is operator', [PLAYER], C.player, 'Boolean'),
   val('player_is_online', '%1 is online', [PLAYER], C.player, 'Boolean'),
@@ -217,6 +222,21 @@ const defs = [
     tooltip: '20 ticks = 1 second',
   },
   stmt('time_wait', 'wait %1 ticks then %2 %3', [T('TICKS'), { type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }], C.time, 'Does not block the server: the body runs later'),
+  {
+    type: 'task_named',
+    message0: 'task named %1 every %2 ticks',
+    args0: [{ type: 'field_input', name: 'NAME', text: 'mytask' }, { type: 'field_number', name: 'TICKS', value: 20, min: 1, precision: 1 }],
+    message1: '%1',
+    args1: [{ type: 'input_statement', name: 'DO' }],
+    colour: C.time,
+    hat: 'cap',
+    tooltip: 'A repeating task you can stop later by name. Starts when the plugin enables.',
+  },
+  stmt('task_stop', 'stop task named %1', [T('NAME')], C.time, 'Stops a task started with "task named …"'),
+  val('task_running', 'task named %1 is running', [T('NAME')], C.time, 'Boolean'),
+  stmt('task_delay_named', 'run task named %1 after %2 ticks %3 %4', [
+    { type: 'field_input', name: 'NAME', text: 'later' }, T('TICKS'), { type: 'input_dummy' }, { type: 'input_statement', name: 'DO' },
+  ], C.time, 'One-shot delayed task, cancellable by name before it fires'),
   stmt('ctrl_stop', 'stop this script', [], C.control),
   val('time_now', 'server time (ms)', [], C.time, 'Number'),
   val('op_contains', '%1 contains %2', [T('TEXT'), T('PART')], C.operators, 'Boolean'),
